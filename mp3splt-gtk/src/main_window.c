@@ -1254,7 +1254,7 @@ const static GActionEntry app_entries[] = { { "open_single_file", open_file_menu
 
 void create_application(ui_state *ui)
 {
-  GtkApplication *app = gtk_application_new("net.sf.mp3splt", G_APPLICATION_FLAGS_NONE);
+  GtkApplication *app = gtk_application_new("net.sf.mp3splt", G_APPLICATION_DEFAULT_FLAGS);
   ui->gui->application = app;
 
   g_action_map_add_action_entries(G_ACTION_MAP(app), app_entries, G_N_ELEMENTS(app_entries), ui);

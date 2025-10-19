@@ -348,10 +348,11 @@ void splt_io_create_output_dirs_if_necessary(
 int splt_io_create_directories(splt_state *state, const char *dir)
 {
   int result = SPLT_OK;
+  int max_size = strnlen(dir, 1024) + 100;
 
   if (dir == NULL || dir[0] == '\0') { return result; }
 
-  char *dir_to_create = malloc(sizeof(char) * (strlen(dir) + 100));
+  char *dir_to_create = malloc(sizeof(char) * max_size);
   if (!dir_to_create) { return SPLT_ERROR_CANNOT_ALLOCATE_MEMORY; }
 
   splt_d_print_debug(state, "Starting to create directories for _%s_ ...\n", dir);
@@ -398,7 +399,7 @@ int splt_io_create_directories(splt_state *state, const char *dir)
     ptr++;
   }
 
-  strncpy(dir_to_create, dir, strlen(dir) + 1);
+  strncpy(dir_to_create, dir, max_size);
 
   if (!splt_io_check_if_directory(dir_to_create))
   {

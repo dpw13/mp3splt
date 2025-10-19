@@ -41,7 +41,7 @@ void splt_su_replace_all_char(char *str, char to_replace, char replacement);
 char *splt_su_replace_all(const char *str, char *to_replace, char *replacement, int *error);
 int splt_su_set(char **str, const char *to_append, ...);
 int splt_su_append(char **str, const char *to_append, ...);
-int splt_su_append_str(char **str, const char *to_append, ...);
+splt_code splt_su_append_str(char **str, const char *to_append, ...);
 void splt_su_free_replace(char **str, char *replacement);
 int splt_su_copy(const char *src, char **dest);
 

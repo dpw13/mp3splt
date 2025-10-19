@@ -66,9 +66,10 @@
 #include "mp3_utils.h"
 
 //! Initializes a stream frame
-void splt_mp3_init_stream_frame(splt_mp3_state *mp3state)
+void splt_mp3_init_stream_frame(splt_mp3_state *mp3state, unsigned int mad_options)
 {
   mad_stream_init(&mp3state->stream);
+  mad_stream_options(&mp3state->stream, mad_options);
   mad_frame_init(&mp3state->frame);
 }
 

@@ -154,12 +154,16 @@ regex_options *parse_tags_from_fname_regex_options(const char *parameters, int *
 
   char *ptr = NULL;
 
+  if (parameters == NULL) { return regex_options; }
+
   if ((ptr = strstr(parameters, "regex=")) != NULL)
   {
     char *regex = ptr + 6;
-    regex_options->regex = my_malloc(sizeof(char) * (strlen(regex) + 1));
-    strncpy(regex_options->regex, regex, strlen(regex));
-    regex_options->regex[strlen(regex)] = '\0';
+    int re_size = strnlen(regex, 1024) + 1;
+
+    regex_options->regex = my_malloc(sizeof(char) * re_size);
+    strncpy(regex_options->regex, regex, re_size);
+    regex_options->regex[re_size - 1] = '\0';
   }
   else { print_warning(_("no regular expression found as argument.")); }
 

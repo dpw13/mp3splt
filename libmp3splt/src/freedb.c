@@ -144,7 +144,7 @@ the default which currently means freedb2.org
 80).
 */
 int splt_freedb_process_search(
-  splt_state *state, char *search, int search_type, const char search_server[256], int port_number)
+  splt_state *state, char *search, int search_type, const char *search_server, int port_number)
 {
   int error = SPLT_FREEDB_OK;
   int err = SPLT_OK;
@@ -305,7 +305,7 @@ uses
 \todo see when we don't have a valid port or get_type
 */
 char *splt_freedb_get_file(splt_state *state, int disc_id, int *error, int get_type,
-  const char cddb_get_server[256], int port_number)
+  const char *cddb_get_server, int port_number)
 {
   int err = SPLT_FREEDB_FILE_OK;
   *error = err;

@@ -1212,10 +1212,9 @@ static gpointer test_regex_thread(ui_for_split *ui_fs)
   splt_code error = SPLT_OK;
   splt_tags *tags = mp3splt_parse_filename_regex(ui->mp3splt_state, &error);
   print_status_bar_confirmation_in_idle(error, ui);
+  GString *regex_result = g_string_new(NULL);
 
   if (error < 0) { goto end; }
-
-  GString *regex_result = g_string_new(NULL);
 
   g_string_append(regex_result, _("<artist>: "));
   char *artist = mp3splt_tags_get(tags, SPLT_TAGS_ARTIST);

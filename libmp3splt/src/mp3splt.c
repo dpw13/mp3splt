@@ -520,9 +520,7 @@ int mp3splt_progress_get_type(const splt_progress *p_bar) { return p_bar->progre
 
 char *mp3splt_progress_get_filename_shorted(const splt_progress *p_bar)
 {
-  if (p_bar->filename_shorted) { return strdup(p_bar->filename_shorted); }
-
-  return NULL;
+  return strdup(p_bar->filename_shorted);
 }
 
 int mp3splt_progress_get_current_split(const splt_progress *p_bar) { return p_bar->current_split; }
@@ -1363,7 +1361,7 @@ splt_freedb_results *mp3splt_get_freedb_search(splt_state *state,
   const char *search_string,
   splt_code *error,
   int search_type,
-  const char search_server[256],
+  const char *search_server,
   int port)
 {
   int erro = SPLT_OK;
@@ -1448,7 +1446,7 @@ a cddb file to use it be able to use it
 use.
 */
 splt_code mp3splt_write_freedb_file_result(splt_state *state, int disc_id, const char *cddb_file,
-  int cddb_get_type, const char cddb_get_server[256], int port)
+  int cddb_get_type, const char *cddb_get_server, int port)
 {
   int erro = SPLT_OK;
   int *err = &erro;
@@ -1770,9 +1768,8 @@ char **mp3splt_find_filenames(
             return NULL;
           }
 
-          int fname_size = strlen(filename) + 1;
+          int fname_size = strnlen(filename, 1024) + 1;
           found_files[0] = malloc(sizeof(char) * fname_size);
-          memset(found_files[0], '\0', fname_size);
 
           if (!found_files[0])
           {
@@ -1780,6 +1777,7 @@ char **mp3splt_find_filenames(
             return NULL;
           }
 
+          memset(found_files[0], '\0', fname_size);
           strncat(found_files[0], filename, fname_size);
           *num_of_files_found = 1;
         }

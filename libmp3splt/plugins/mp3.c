@@ -1345,7 +1345,7 @@ static splt_mp3_state *splt_mp3_info(FILE *file_input, splt_state *state, int fr
   mp3state->end_sample = SPLT_MP3_NO_END_SAMPLE;
 
   //we initialise the mad structures
-  splt_mp3_init_stream_frame(mp3state);
+  splt_mp3_init_stream_frame(mp3state, MAD_OPTION_NOCHANNEL);
   mad_synth_init(&mp3state->synth);
 
   mad_timer_reset(&mp3state->timer);
@@ -1398,8 +1398,8 @@ static splt_mp3_state *splt_mp3_info(FILE *file_input, splt_state *state, int fr
         //Handle misplaced Xing header in mp3 files with CRC
         else
         {
-          if (xing_word == ((SPLT_MP3_XING_MAGIC << 16) & 0xffffffffL) ||
-              xing_word == ((SPLT_MP3_INFO_MAGIC << 16) & 0xffffffffL))
+          if (xing_word == (((unsigned long)SPLT_MP3_XING_MAGIC << 16) & 0xffffffffL) ||
+              xing_word == (((unsigned long)SPLT_MP3_INFO_MAGIC << 16) & 0xffffffffL))
           {
             ptr = start;
             mad_bit_skip(&ptr, 16);
@@ -2105,7 +2105,7 @@ static double splt_mp3_split(const char *output_fname, splt_state *state, double
           }
 
           int mad_err = SPLT_OK;
-          splt_mp3_init_stream_frame(mp3state);
+          splt_mp3_init_stream_frame(mp3state, MAD_OPTION_NOCHANNEL);
           switch (splt_mp3_get_valid_frame(state, &mad_err))
           {
             case 1:
@@ -2203,7 +2203,7 @@ static double splt_mp3_split(const char *output_fname, splt_state *state, double
         //take the whole last frame : might result in more frames
         //but if we don't do it, we might have less frames
         int mad_err = SPLT_OK;
-        splt_mp3_init_stream_frame(mp3state);
+        splt_mp3_init_stream_frame(mp3state, MAD_OPTION_NOCHANNEL);
         switch (splt_mp3_get_valid_frame(state, &mad_err))
         {
           case 1:
@@ -3254,14 +3254,14 @@ static void splt_mp3_dewrap(int listonly, const char *dir, int *error, splt_stat
                   if (ptr - temp > 0) { ptr++; }
                 }
                 //if dir == .DIRCHAR
-                if (strcmp(dir, str_temp) == 0) { snprintf(filename, 2048, "%s%s", dir, ptr); }
+                if (strcmp(dir, str_temp) == 0) { snprintf(filename, 2047, "%s%s", dir, ptr); }
                 else
                 {
                   if (dir[strlen(dir) - 1] == SPLT_DIRCHAR)
                   {
-                    snprintf(filename, 2048, "%s%s", dir, ptr);
+                    snprintf(filename, 2047, "%s%s", dir, ptr);
                   }
-                  else { snprintf(filename, 2048, "%s%c%s", dir, SPLT_DIRCHAR, ptr); }
+                  else { snprintf(filename, 2047, "%s%c%s", dir, SPLT_DIRCHAR, ptr); }
                 }
                 splt_d_print_debug(state, "wrap dir _%s_\n", dir);
                 splt_d_print_debug(state, "wrap after dir _%s_\n", ptr);

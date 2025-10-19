@@ -34,6 +34,9 @@
 int splt_c_put_split_file(splt_state *state, const char *filename);
 void splt_c_put_progress_text(splt_state *state, int type);
 
+void splt_c_put_message_to_client(
+  splt_state *state, const char *message, splt_message_type mess_type);
+
 void splt_c_put_info_message_to_client(splt_state *state, const char *message, ...);
 void splt_c_put_warning_message_to_client(splt_state *state, const char *message, ...);
 void splt_c_put_debug_message_to_client(splt_state *state, const char *message, ...);

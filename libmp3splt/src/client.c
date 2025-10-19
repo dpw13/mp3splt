@@ -33,8 +33,6 @@
 
 #include "splt.h"
 
-static void splt_c_put_message_to_client(
-  splt_state *state, const char *message, splt_message_type mess_type);
 static int splt_c_append_to_m3u_file(splt_state *state, const char *filename);
 static void splt_c_set_filename_shorted_from_current_point_name(splt_state *state);
 
@@ -129,7 +127,7 @@ void splt_c_update_progress(splt_state *state, double current_point, double tota
   }
 }
 
-static void splt_c_put_message_to_client(
+void splt_c_put_message_to_client(
   splt_state *state, const char *message, splt_message_type mess_type)
 {
   if (!splt_o_messages_locked(state))

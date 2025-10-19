@@ -28,7 +28,7 @@
 
 #include "mp3.h"
 
-void splt_mp3_init_stream_frame(splt_mp3_state *mp3state);
+void splt_mp3_init_stream_frame(splt_mp3_state *mp3state, unsigned int mad_options);
 void splt_mp3_finish_stream_frame(splt_mp3_state *mp3state);
 void splt_mp3_checksync(splt_mp3_state *mp3state);
 int splt_mp3_c_bitrate(unsigned long head);

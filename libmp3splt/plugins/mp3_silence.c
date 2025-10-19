@@ -95,7 +95,7 @@ static void splt_mp3_scan_silence_and_process(splt_state *state, off_t begin_off
   }
 
   //initialise mad stuff
-  splt_mp3_init_stream_frame(mp3state);
+  splt_mp3_init_stream_frame(mp3state, MAD_OPTION_NOCHANNEL);
   mad_synth_init(&mp3state->synth);
 
   mad_timer_reset(&mp3state->timer);

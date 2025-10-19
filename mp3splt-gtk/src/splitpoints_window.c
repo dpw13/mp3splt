@@ -1715,8 +1715,8 @@ static void build_and_show_popup_menu(GtkWidget *treeview, GdkEventButton *event
 
   gtk_widget_show_all(menu);
 
-  gtk_menu_popup(GTK_MENU(menu), NULL, NULL, NULL, NULL, (event != NULL) ? event->button : 0,
-    gdk_event_get_time((GdkEvent *)event));
+  gtk_menu_popup_at_widget(
+    GTK_MENU(menu), treeview, GDK_GRAVITY_SOUTH_WEST, GDK_GRAVITY_NORTH_WEST, (GdkEvent *)event);
 }
 
 static gboolean show_popup(GtkWidget *treeview, ui_state *ui)

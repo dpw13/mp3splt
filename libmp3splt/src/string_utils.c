@@ -547,11 +547,9 @@ int splt_su_str_ends_with(const char *str1, const char *str2)
 
 char *splt_su_format_messagev(splt_state *state, const char *message, va_list ap)
 {
-  int counter = 0;
-
   int written_chars = 0;
 
-  int size = 255;
+  int size = 256;
   char *mess = malloc(sizeof(char) * size);
   if (mess == NULL)
   {
@@ -560,12 +558,12 @@ char *splt_su_format_messagev(splt_state *state, const char *message, va_list ap
     return NULL;
   }
 
-  while (counter < LONG_MAX)
+  while (size < 32768)
   {
-    written_chars = vsnprintf(mess, size, message, ap);
+    written_chars = vsnprintf(mess, size - 1, message, ap);
 
     if ((written_chars > -1) && (written_chars + 1 < size)) { break; }
-    else { size += 255; }
+    else { size += 256; }
 
     if ((mess = realloc(mess, size)) == NULL)
     {
@@ -574,8 +572,6 @@ char *splt_su_format_messagev(splt_state *state, const char *message, va_list ap
       splt_e_error(SPLT_IERROR_CHAR, __func__, 0, _("not enough memory"));
       return NULL;
     }
-
-    counter++;
   }
 
   return mess;

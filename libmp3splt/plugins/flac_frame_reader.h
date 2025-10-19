@@ -109,7 +109,7 @@ void splt_flac_fr_read_and_write_frames(splt_state *state, splt_flac_frame_reade
   const splt_tags *tags_to_write, const char *output_fname, double begin_point, double end_point,
   int save_end_point, unsigned min_blocksize, unsigned max_blocksize, unsigned bits_per_sample,
   unsigned sample_rate, unsigned channels, unsigned min_framesize, unsigned max_framesize,
-  float offset, int *error);
+  float offset, splt_code *error);
 
 #define SPLT_FLAC_FR_BUFFER_SIZE 2048
 

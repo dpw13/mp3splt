@@ -69,7 +69,7 @@ static splt_tags *splt_tu_duplicate_tags(splt_state *state, splt_code *error, in
     if (*error < 0)
     {
       int j = 0;
-      for (j = 0; i < i; j++) { splt_tu_free_one_tags_content(&tags[i]); }
+      for (j = 0; j < i; j++) { splt_tu_free_one_tags_content(&tags[i]); }
       *tags_number = 0;
       return NULL;
     }
