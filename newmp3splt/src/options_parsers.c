@@ -30,120 +30,121 @@ int parse_silence_options(char *arg, float *th, int *gap, int *nt, float *off, i
   float *min_track_length, int *shots, float *min_track_join, float *keep_silence_left,
   float *keep_silence_right, int *warn_if_no_auto_adjust, int *err_if_no_auto_adjust)
 {
-  char *ptr = NULL;
   int found = 0;
 
-  if ((gap != NULL) && ((ptr = strstr(arg, "gap")) != NULL))
-  {
-    if ((ptr = strchr(ptr, '=')) != NULL)
+  char *var = strtok(arg, ",");
+  do {
+    char *ptr = strchr(var, '=');
+    if ((gap != NULL) && (strncmp(var, "gap", 3) == 0))
     {
-      if (sscanf(ptr + 1, "%d", gap) == 1) { found++; }
-      else { print_warning(_("bad gap argument. It will be ignored !")); }
-    }
-  }
-
-  if ((shots != NULL) && ((ptr = strstr(arg, "shots")) != NULL))
-  {
-    if ((ptr = strchr(ptr, '=')) != NULL)
-    {
-      if (sscanf(ptr + 1, "%d", shots) == 1) { found++; }
-      else { print_warning(_("bad shots argument. It will be ignored !")); }
-    }
-  }
-
-  if ((min_track_join != NULL) && ((ptr = strstr(arg, "trackjoin")) != NULL))
-  {
-    if ((ptr = strchr(ptr, '=')) != NULL)
-    {
-      if (sscanf(ptr + 1, "%f", min_track_join) == 1) { found++; }
-      else { print_warning(_("bad trackjoin argument. It will be ignored !")); }
-    }
-  }
-
-  if ((th != NULL) && ((ptr = strstr(arg, "th")) != NULL))
-  {
-    if ((ptr = strchr(ptr, '=')) != NULL)
-    {
-      if (sscanf(ptr + 1, "%f", th) == 1) { found++; }
-      else { print_warning(_("bad threshold argument. It will be ignored !")); }
-    }
-  }
-
-  if ((nt != NULL) && ((ptr = strstr(arg, "nt")) != NULL))
-  {
-    if ((ptr = strchr(ptr, '=')) != NULL)
-    {
-      if (sscanf(ptr + 1, "%d", nt) == 1) { found++; }
-      else { print_warning(_("bad tracknumber argument. It will be ignored !")); }
-    }
-  }
-
-  if (rm != NULL)
-  {
-    if ((ptr = strstr(arg, "rm=")) != NULL)
-    {
-      if (sscanf(ptr + 3, "%f_%f", keep_silence_left, keep_silence_right) != 2)
+      if (ptr != NULL)
       {
-        *keep_silence_left = -200;
-        *keep_silence_right = -200;
-        print_warning(_("Bad values for the rm argument. rm parameter will be ignored!"));
+        if (sscanf(ptr + 1, "%d", gap) == 1) { found++; }
+        else { print_warning(_("bad gap argument. It will be ignored !")); }
       }
-      found++;
-      *rm = 1;
     }
-    else if ((ptr = strstr(arg, "rm")) != NULL)
-    {
-      found++;
-      *rm = 1;
-    }
-  }
 
-  if ((off != NULL) && ((ptr = strstr(arg, "off")) != NULL))
-  {
-    if ((ptr = strchr(ptr, '=')) != NULL)
+    if ((shots != NULL) && (strncmp(var, "shots", 5) == 0))
     {
-      if (sscanf(ptr + 1, "%f", off) == 1) { found++; }
-      else { print_warning(_("bad offset argument. It will be ignored!")); }
+      if (ptr != NULL)
+      {
+        if (sscanf(ptr + 1, "%d", shots) == 1) { found++; }
+        else { print_warning(_("bad shots argument. It will be ignored !")); }
+      }
     }
-  }
 
-  if ((min != NULL) && ((ptr = strstr(arg, "trackmin")) != NULL))
-  {
-    if ((ptr = strchr(ptr, '=')) != NULL)
+    if ((min_track_join != NULL) && (strncmp(var, "trackjoin", 9) == 0))
     {
-      if (sscanf(ptr + 1, "%f", min_track_length) == 1) { found++; }
-      else { print_warning(_("bad minimum track length argument. It will be ignored !")); }
+      if (ptr != NULL)
+      {
+        if (sscanf(ptr + 1, "%f", min_track_join) == 1) { found++; }
+        else { print_warning(_("bad trackjoin argument. It will be ignored !")); }
+      }
     }
-  }
 
-  if ((min != NULL) && ((ptr = strstr(arg, "min")) != NULL))
-  {
-    if (ptr > arg && *(ptr - 1) == 'k') { return found; }
-
-    if ((ptr = strchr(ptr, '=')) != NULL)
+    if ((th != NULL) && (strncmp(var, "th", 2) == 0))
     {
-      if (sscanf(ptr + 1, "%f", min) == 1) { found++; }
-      else { print_warning(_("bad minimum silence length argument. It will be ignored !")); }
+      if (ptr != NULL)
+      {
+        if (sscanf(ptr + 1, "%f", th) == 1) { found++; }
+        else { print_warning(_("bad threshold argument. It will be ignored !")); }
+      }
     }
-  }
 
-  if (warn_if_no_auto_adjust != NULL)
-  {
-    if ((ptr = strstr(arg, "warn_if_no_aa")) != NULL)
+    if ((nt != NULL) && (strncmp(var, "nt", 2) == 0))
     {
-      found++;
-      *warn_if_no_auto_adjust = 1;
+      if (ptr != NULL)
+      {
+        if (sscanf(ptr + 1, "%d", nt) == 1) { found++; }
+        else { print_warning(_("bad tracknumber argument. It will be ignored !")); }
+      }
     }
-  }
 
-  if (err_if_no_auto_adjust != NULL)
-  {
-    if ((ptr = strstr(arg, "error_if_no_aa")) != NULL)
+    if ((rm != NULL) && (strncmp(var, "rm", 2) == 0))
     {
-      found++;
-      *err_if_no_auto_adjust = 1;
+      if (ptr != NULL)
+      {
+        if (sscanf(ptr + 3, "%f_%f", keep_silence_left, keep_silence_right) != 2)
+        {
+          *keep_silence_left = -200;
+          *keep_silence_right = -200;
+          print_warning(_("Bad values for the rm argument. rm parameter will be ignored!"));
+        }
+        found++;
+        *rm = 1;
+      }
+      else
+      {
+        found++;
+        *rm = 1;
+      }
     }
-  }
+
+    if ((off != NULL) && (strncmp(var, "off", 3) == 0))
+    {
+      if (ptr != NULL)
+      {
+        if (sscanf(ptr + 1, "%f", off) == 1) { found++; }
+        else { print_warning(_("bad offset argument. It will be ignored!")); }
+      }
+    }
+
+    if ((min_track_length != NULL) && (strncmp(var, "trackmin", 8) == 0))
+    {
+      if (ptr != NULL)
+      {
+        if (sscanf(ptr + 1, "%f", min_track_length) == 1) { found++; }
+        else { print_warning(_("bad minimum track length argument. It will be ignored !")); }
+      }
+    }
+
+    if ((min != NULL) && (strncmp(var, "min", 3) == 0))
+    {
+      if (ptr != NULL)
+      {
+        if (sscanf(ptr + 1, "%f", min) == 1) { found++; }
+        else { print_warning(_("bad minimum silence length argument. It will be ignored !")); }
+      }
+    }
+
+    if (warn_if_no_auto_adjust != NULL)
+    {
+      if (strcmp(var, "warn_if_no_aa") == 0)
+      {
+        found++;
+        *warn_if_no_auto_adjust = 1;
+      }
+    }
+
+    if (err_if_no_auto_adjust != NULL)
+    {
+      if (strcmp(var, "error_if_no_aa") == 0)
+      {
+        found++;
+        *err_if_no_auto_adjust = 1;
+      }
+    }
+  } while ((var = strtok(NULL, ",")) != NULL);
 
   return found;
 }
