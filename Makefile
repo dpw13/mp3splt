@@ -24,6 +24,10 @@ help:
 	@echo "make windows_cross_installers : generates windows installers with a cross compilation"
 	@echo
 
+format:
+	find . -name *.c | xargs clang-format -i
+	find . -name *.h | xargs clang-format -i
+
 #source distribution creation
 source_packages: clean_tmp
 	./${LIBMP3SPLT_DIR}/make_source_package.sh

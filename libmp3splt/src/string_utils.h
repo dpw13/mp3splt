@@ -64,8 +64,7 @@ char *splt_su_convert(const char *str, splt_str_format format, int *error);
 void splt_su_str_cut_last_char(char *str);
 double splt_su_str_line_to_double(const char *str);
 
-char *splt_su_get_file_with_output_path(splt_state *state,
-    char *filename, int *error);
+char *splt_su_get_file_with_output_path(splt_state *state, char *filename, int *error);
 
 int splt_su_str_ends_with(const char *str1, const char *str2);
 
@@ -74,5 +73,3 @@ int splt_su_str_line_has_digit(const char *str);
 char *splt_su_format_messagev(splt_state *state, const char *message, va_list ap);
 
 #endif
-
-
