@@ -195,7 +195,7 @@ static void splt_ogg_scan_silence_and_process(splt_state *state, short seconds, 
 
             int bs = splt_ogg_get_blocksize(oggstate, oggstate->vi, &op);
 
-            //we currently loose the first packet when using the
+            //we currently lose the first packet when using the
             //auto adjust option because we are out of sync,
             //so we disable the continuity check
             if (!splt_o_get_int_option(state, SPLT_OPT_AUTO_ADJUST))

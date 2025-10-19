@@ -57,13 +57,10 @@ typedef struct
   short x_option;
   short N_option;
   short O_option;
-  short X_option;
   short A_option;
   short G_option;
   //-Q option
   short qq_option;
-  //info -i option, m3u file option
-  short i_option;
   short m_option;
   short F_option;
   short S_option;

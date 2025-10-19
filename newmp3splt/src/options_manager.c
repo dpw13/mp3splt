@@ -144,14 +144,12 @@ options *new_options()
   opt->g_option = SPLT_FALSE;
   opt->n_option = SPLT_FALSE;
   opt->q_option = SPLT_FALSE;
-  opt->i_option = SPLT_FALSE;
   opt->N_option = SPLT_FALSE;
   opt->O_option = SPLT_FALSE;
   opt->G_option = SPLT_FALSE;
   opt->E_option = SPLT_FALSE;
   opt->P_option = SPLT_FALSE;
   opt->x_option = SPLT_FALSE;
-  opt->X_option = SPLT_FALSE;
   opt->qq_option = SPLT_FALSE;
   opt->A_option = SPLT_FALSE;
   opt->m_option = SPLT_FALSE;

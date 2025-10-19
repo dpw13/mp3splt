@@ -149,8 +149,8 @@ int main(int argc, char **orig_argv)
 
   //parse command line options
   int option;
-  while ((option = getopt(data->argc, data->argv,
-            "Mm:O:DvifKkwleqnasrc:d:o:t:p:g:hQN12T:XxPE:A:S:G:F:C:I:b")) != -1)
+  while ((option = getopt(
+            data->argc, data->argv, "Mm:O:DvfKkwleqnasrc:d:o:t:p:g:hQNT:xPE:A:S:G:F:C:I:b")) != -1)
   {
     switch (option)
     {
@@ -159,18 +159,6 @@ int main(int argc, char **orig_argv)
         break;
       case 'h':
         show_small_help_exit(data);
-        break;
-      //deprecated: use -T
-      case '1':
-        mp3splt_set_int_option(state, SPLT_OPT_FORCE_TAGS_VERSION, 1);
-        opt->T_option_value = 1;
-        opt->T_option = SPLT_TRUE;
-        break;
-      //deprecated: use -T
-      case '2':
-        mp3splt_set_int_option(state, SPLT_OPT_FORCE_TAGS_VERSION, 2);
-        opt->T_option_value = 2;
-        opt->T_option = SPLT_TRUE;
         break;
       case 'T':
         opt->T_option_value = atoi(optarg);
@@ -195,6 +183,8 @@ int main(int argc, char **orig_argv)
         opt->k_option = SPLT_TRUE;
         break;
       case 'K':
+        mp3splt_set_int_option(
+          state, SPLT_OPT_CUE_CDDB_ADD_TAGS_WITH_KEEP_ORIGINAL_TAGS, SPLT_TRUE);
         opt->K_option = SPLT_TRUE;
         break;
       case 'w':
@@ -210,10 +200,11 @@ int main(int argc, char **orig_argv)
         opt->e_option = SPLT_TRUE;
         break;
       case 'q':
-        opt->q_option = SPLT_TRUE;
         mp3splt_set_int_option(state, SPLT_OPT_QUIET_MODE, SPLT_TRUE);
+        opt->q_option = SPLT_TRUE;
         break;
       case 'n':
+        mp3splt_set_int_option(state, SPLT_OPT_TAGS, SPLT_NO_TAGS);
         opt->n_option = SPLT_TRUE;
         break;
       case 'a':
@@ -228,16 +219,12 @@ int main(int argc, char **orig_argv)
         mp3splt_set_int_option(state, SPLT_OPT_SPLIT_MODE, SPLT_OPTION_TRIM_SILENCE_MODE);
         opt->r_option = SPLT_TRUE;
         break;
-      case 'i':
-        mp3splt_set_int_option(state, SPLT_OPT_SPLIT_MODE, SPLT_OPTION_SILENCE_MODE);
-        opt->i_option = SPLT_TRUE;
-        break;
       case 'c':
         mp3splt_set_int_option(state, SPLT_OPT_TAGS, SPLT_CURRENT_TAGS);
         opt->c_option = SPLT_TRUE;
         opt->cddb_arg = strdup(optarg);
         break;
-      case 'C':;
+      case 'C':
         int intarg = atoi(optarg);
         if (intarg == 8)
         {
@@ -252,7 +239,7 @@ int main(int argc, char **orig_argv)
           mp3splt_set_int_option(state, SPLT_OPT_ID3V2_ENCODING, SPLT_ID3V2_LATIN1);
         }
         break;
-      case 'I':;
+      case 'I':
         int intarg2 = atoi(optarg);
         if (intarg2 == 8)
         {
@@ -268,8 +255,8 @@ int main(int argc, char **orig_argv)
         }
         break;
       case 'P':
-        opt->P_option = SPLT_TRUE;
         mp3splt_set_int_option(state, SPLT_OPT_PRETEND_TO_SPLIT, SPLT_TRUE);
+        opt->P_option = SPLT_TRUE;
         break;
       case 'E':
         opt->export_cue_arg = strdup(optarg);
@@ -333,9 +320,6 @@ int main(int argc, char **orig_argv)
               "\tMust be min.sec[.0-99] or EOF-min.sec[.0-99], read man page for details."),
             data);
         }
-        break;
-      case 'X':
-        opt->X_option = SPLT_TRUE;
         break;
       case 't':
         mp3splt_set_int_option(state, SPLT_OPT_SPLIT_MODE, SPLT_OPTION_TIME_MODE);
@@ -428,17 +412,13 @@ int main(int argc, char **orig_argv)
     }
   }
 
-  //callback for the progress bar
-  if (!opt->q_option && !opt->X_option)
+  if (!opt->q_option)
   {
+    // callback for the progress bar
     mp3splt_set_progress_function(state, put_progress_bar, data);
+    // write authors and other unless quiet
+    print_version_authors(console_err);
   }
-
-  //if quiet, does not write authors and other
-  if (!opt->q_option && !opt->X_option) { print_version_authors(console_err); }
-
-  //if -n option, set no tags whatever happends
-  if (opt->n_option) { mp3splt_set_int_option(state, SPLT_OPT_TAGS, SPLT_NO_TAGS); }
 
   err = SPLT_OK;
 
@@ -599,8 +579,8 @@ int main(int argc, char **orig_argv)
 
   //if we have a normal split, we need to parse the splitpoints
   int normal_split = SPLT_FALSE;
-  if (!opt->l_option && !opt->i_option && !opt->c_option && !opt->e_option && !opt->t_option &&
-      !opt->w_option && !opt->s_option && !opt->A_option && !opt->S_option && !opt->r_option)
+  if (!opt->l_option && !opt->c_option && !opt->e_option && !opt->t_option && !opt->w_option &&
+      !opt->s_option && !opt->A_option && !opt->S_option && !opt->r_option)
   {
     if (data->number_of_splitpoints < 2)
     {
@@ -668,7 +648,7 @@ int main(int argc, char **orig_argv)
     if (is_stdin(current_filename) && we_have_incompatible_stdin_option(opt))
     {
       print_error_exit(_("cannot use -k option (or STDIN) with"
-                         " one of the following options: -S -s -r -w -l -e -i -a -p -K"),
+                         " one of the following options: -S -s -r -w -l -e -a -p -K"),
         data);
     }
 
@@ -676,11 +656,7 @@ int main(int argc, char **orig_argv)
     err = mp3splt_set_filename_to_split(state, current_filename);
     process_confirmation_error(err, data);
 
-    if (opt->K_option)
-    {
-      mp3splt_read_original_tags(state);
-      mp3splt_set_int_option(state, SPLT_OPT_CUE_CDDB_ADD_TAGS_WITH_KEEP_ORIGINAL_TAGS, SPLT_TRUE);
-    }
+    if (opt->K_option) { mp3splt_read_original_tags(state); }
 
     //if we list wrap files
     if (opt->l_option)
@@ -707,118 +683,107 @@ int main(int argc, char **orig_argv)
     }
     else
     {
-      //count how many silence splitpoints we have
-      //if we count how many silence splitpoints
-      if (opt->i_option)
+      if (opt->c_option)
       {
-        err = SPLT_OK;
-        mp3splt_set_silence_points(state, &err);
+        if ((strstr(opt->cddb_arg, ".cue") != NULL) || (strstr(opt->cddb_arg, ".CUE") != NULL))
+        {
+          err = mp3splt_import(state, CUE_IMPORT, opt->cddb_arg);
+          process_confirmation_error(err, data);
+
+          err = SPLT_OK;
+          splt_point *splitpoint = mp3splt_point_new(LONG_MAX, &err);
+          process_confirmation_error(err, data);
+          err = mp3splt_append_splitpoint(state, splitpoint);
+          process_confirmation_error(err, data);
+
+          err = mp3splt_remove_tags_of_skippoints(state);
+          process_confirmation_error(err, data);
+        }
+        else if (strncmp(opt->cddb_arg, "query", 5) == 0)
+        {
+          if (j == 0)
+          {
+            int ambigous = parse_query_arg(opt, opt->cddb_arg);
+            if (ambigous) { print_warning(_("freedb query format ambigous !")); }
+
+            do_freedb_search(data);
+          }
+
+          err = mp3splt_import(state, CDDB_IMPORT, MP3SPLT_CDDBFILE);
+          process_confirmation_error(err, data);
+        }
+        else if (strncmp(opt->cddb_arg, "internal_sheet", 14) == 0)
+        {
+          err = mp3splt_import(state, PLUGIN_INTERNAL_IMPORT, current_filename);
+          process_confirmation_error(err, data);
+        }
+        else
+        {
+          err = mp3splt_import(state, CDDB_IMPORT, opt->cddb_arg);
+          process_confirmation_error(err, data);
+        }
+      }
+      else if (opt->audacity_labels_arg)
+      {
+        err = mp3splt_import(state, AUDACITY_LABELS_IMPORT, opt->audacity_labels_arg);
         process_confirmation_error(err, data);
       }
-      else
+      else if (normal_split)
       {
-        if (opt->c_option)
+        //we set the splitpoints to the library
+        for (i = 0; i < data->number_of_splitpoints; i++)
         {
-          if ((strstr(opt->cddb_arg, ".cue") != NULL) || (strstr(opt->cddb_arg, ".CUE") != NULL))
-          {
-            err = mp3splt_import(state, CUE_IMPORT, opt->cddb_arg);
-            process_confirmation_error(err, data);
+          splt_point *splitpoint = mp3splt_point_new(data->splitpoints[i], &err);
+          process_confirmation_error(err, data);
 
-            err = SPLT_OK;
-            splt_point *splitpoint = mp3splt_point_new(LONG_MAX, &err);
-            process_confirmation_error(err, data);
-            err = mp3splt_append_splitpoint(state, splitpoint);
-            process_confirmation_error(err, data);
-
-            err = mp3splt_remove_tags_of_skippoints(state);
-            process_confirmation_error(err, data);
-          }
-          else if (strncmp(opt->cddb_arg, "query", 5) == 0)
-          {
-            if (j == 0)
-            {
-              int ambigous = parse_query_arg(opt, opt->cddb_arg);
-              if (ambigous) { print_warning(_("freedb query format ambigous !")); }
-
-              do_freedb_search(data);
-            }
-
-            err = mp3splt_import(state, CDDB_IMPORT, MP3SPLT_CDDBFILE);
-            process_confirmation_error(err, data);
-          }
-          else if (strncmp(opt->cddb_arg, "internal_sheet", 14) == 0)
-          {
-            err = mp3splt_import(state, PLUGIN_INTERNAL_IMPORT, current_filename);
-            process_confirmation_error(err, data);
-          }
-          else
-          {
-            err = mp3splt_import(state, CDDB_IMPORT, opt->cddb_arg);
-            process_confirmation_error(err, data);
-          }
-        }
-        else if (opt->audacity_labels_arg)
-        {
-          err = mp3splt_import(state, AUDACITY_LABELS_IMPORT, opt->audacity_labels_arg);
+          err = mp3splt_append_splitpoint(state, splitpoint);
           process_confirmation_error(err, data);
         }
-        else if (normal_split)
-        {
-          //we set the splitpoints to the library
-          for (i = 0; i < data->number_of_splitpoints; i++)
-          {
-            splt_point *splitpoint = mp3splt_point_new(data->splitpoints[i], &err);
-            process_confirmation_error(err, data);
+      }
 
-            err = mp3splt_append_splitpoint(state, splitpoint);
-            process_confirmation_error(err, data);
-          }
-        }
-
-        //we set the path of split for the -d option
-        if (opt->d_option)
-        {
-          err = mp3splt_set_path_of_split(state, opt->dir_arg);
-          process_confirmation_error(err, data);
-        }
-
-        if (opt->g_option && (opt->custom_tags != NULL))
-        {
-          int ambiguous = mp3splt_put_tags_from_string(state, opt->custom_tags, &err);
-          process_confirmation_error(err, data);
-          if (ambiguous) { print_warning(_("tags format ambiguous !")); }
-        }
-
-        //for cddb, filenames are already set from the library, so
-        //set output filenames to CUSTOM
-        int saved_output_filenames = mp3splt_get_int_option(state, SPLT_OPT_OUTPUT_FILENAMES, &err);
-        if ((opt->c_option || opt->A_option) && !opt->o_option)
-        {
-          mp3splt_set_int_option(state, SPLT_OPT_OUTPUT_FILENAMES, SPLT_OUTPUT_CUSTOM);
-        }
-
-        //we do the effective split
-        err = mp3splt_split(state);
+      //we set the path of split for the -d option
+      if (opt->d_option)
+      {
+        err = mp3splt_set_path_of_split(state, opt->dir_arg);
         process_confirmation_error(err, data);
+      }
 
-        //for cddb, set output filenames to its old value before the split
-        if (opt->c_option && !opt->o_option)
-        {
-          mp3splt_set_int_option(state, SPLT_OPT_OUTPUT_FILENAMES, saved_output_filenames);
-        }
+      if (opt->g_option && (opt->custom_tags != NULL))
+      {
+        int ambiguous = mp3splt_put_tags_from_string(state, opt->custom_tags, &err);
+        process_confirmation_error(err, data);
+        if (ambiguous) { print_warning(_("tags format ambiguous !")); }
+      }
 
-        //print the average silence level
-        if (opt->s_option)
+      //for cddb, filenames are already set from the library, so
+      //set output filenames to CUSTOM
+      int saved_output_filenames = mp3splt_get_int_option(state, SPLT_OPT_OUTPUT_FILENAMES, &err);
+      if ((opt->c_option || opt->A_option) && !opt->o_option)
+      {
+        mp3splt_set_int_option(state, SPLT_OPT_OUTPUT_FILENAMES, SPLT_OUTPUT_CUSTOM);
+      }
+
+      //we do the effective split
+      err = mp3splt_split(state);
+      process_confirmation_error(err, data);
+
+      //for cddb, set output filenames to its old value before the split
+      if (opt->c_option && !opt->o_option)
+      {
+        mp3splt_set_int_option(state, SPLT_OPT_OUTPUT_FILENAMES, saved_output_filenames);
+      }
+
+      //print the average silence level
+      if (opt->s_option)
+      {
+        if (sl->print_silence_level)
         {
-          if (sl->print_silence_level)
+          if (sl->number_of_levels != 0)
           {
-            if (sl->number_of_levels != 0)
-            {
-              float average_silence_levels = sl->level_sum / (double)sl->number_of_levels;
-              char message[256] = { '\0' };
-              snprintf(message, 256, _(" Average silence level: %.2f dB"), average_silence_levels);
-              print_message(message);
-            }
+            float average_silence_levels = sl->level_sum / (double)sl->number_of_levels;
+            char message[256] = { '\0' };
+            snprintf(message, 256, _(" Average silence level: %.2f dB"), average_silence_levels);
+            print_message(message);
           }
         }
       }

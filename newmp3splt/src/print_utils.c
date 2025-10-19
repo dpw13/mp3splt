@@ -266,75 +266,80 @@ void show_small_help_exit(main_data *data)
       "USAGE:\n"
       "      mp3splt [OPTIONS] FILE1 [FILE2] ... [BEGIN_TIME] [TIME] ... [END_TIME]\n"
       "      TIME FORMAT: min.sec[.0-99], even if minutes are over 59\n"
-      "                   or EOF-min.sec[.0-99] (or EOF for End Of File). "));
-  print_message(
-    _("\nOPTIONS (split mode options)\n"
-      " -t + TIME: to split files every fixed time len. (TIME format same as above). \n"
+      "                   or EOF-min.sec[.0-99] (or EOF for End Of File).\n"
+      "\n"
+      "OPTIONS (split mode options)\n"
       " -c + file.cddb, file.cue or \"query\" or \"query{album}\" or \"internal_sheet\".\n"
       "      Get splitpoints and filenames from a .cddb or .cue file or from Internet\n"
-      "      (\"query\"). Use -a to auto-adjust splitpoints."));
-  print_message(
-    _(" -s   Silence detection: automatically find splitpoint. (Use -p for arguments)\n"
+      "      (\"query\"). Use -a to auto-adjust splitpoints.\n"
+      " -K   Copy original tags to output files. Only makes sense with -c.\n"
+      " -A + AUDACITY_FILE: split with splitpoints from the audacity labels file\n"
+      " -v   Prints current version and exits\n"
+      " -h   Shows this help\n"
+      "\n"
+      "(mode selection)\n"
+      " -t + TIME: to split files every fixed time len. (TIME format same as above). \n"
+      " -S + SPLIT_NUMBER: split in SPLIT_NUMBER equal time files\n"
+      " -e   Error mode: split mp3 with sync error detection. (For concatenated mp3)\n"
       " -w   Splits wrapped files created with Mp3Wrap or AlbumWrap.\n"
-      " -l   Lists the tracks from file without extraction. (Only for wrapped mp3)\n"
-      " -e   Error mode: split mp3 with sync error detection. (For concatenated mp3)"));
-  print_message(_(" -r   Trim using silence detection (Use -p for arguments)"));
-
-  print_message(_(" -A + AUDACITY_FILE: split with splitpoints from the audacity labels file"));
-  print_message(_(" -S + SPLIT_NUMBER: split in SPLIT_NUMBER equal time files"));
-  /*  print_message(_(" -i   Count how many silence splitpoints we have with silence detection\n"
-        "      (Use -p for arguments) - DEPRECATED: use -s with -P)\n"*/
-  print_message(
-    " -v   Prints current version and exits\n"
-    " -h   Shows this help");
-  print_message(
-    _("\n(other options)\n"
-      " -T + TAGS_VERSION: for mp3 files, force output tags as version 1, 2 or 1 & 2.\n"
-      "      TAGS_VERSION can be 1, 2 or 12\n"
-      "      (default is to set the same version as the file to split)"));
-  print_message(
-    _(" -m + M3U_FILE: Appends to the specified m3u file the split filenames.\n"
+      "\n"
+      "(silence detection modes)\n"
+      " -r   Trim using silence detection.\n"
+      " -s   Split using silence detection.\n"
+      "\n"
+      " -a   Auto-adjust levels for silence detection.\n"
+      " -p + PARAMETERS (th, nt, off, min, rm, gap, trackmin, shots, trackjoin):\n"
+      "      user arguments for -s, -t.\n"
+      "\n"
+      "(input options)\n"
       " -f   Frame mode (mp3 only): process all frames. For higher precision and VBR.\n"
-      " -b   [Experimental] Bit reservoir handling for gapless playback (mp3 only).\n"
-      " -a   Auto-Adjust splitpoints with silence detection. (Use -p for arguments)"));
-  print_message(
-    _(" -p + PARAMETERS (th, nt, off, min, rm, gap, trackmin, shots, trackjoin): "
-      "user arguments for -s, -a, -t.\n"
+      " -k   Consider input not seekable (slower). Default when input is STDIN (-).\n"
+      "\n"
+      "(file output options)\n"
+      " -l   Lists the tracks from file without extraction. (Only for wrapped mp3)\n"
+      " -m + M3U_FILE: Appends to the specified m3u file the split filenames.\n"
       " -o + FORMAT: output filename pattern. Can contain those variables:\n"
       "      @a: artist tag, @p: performer tag (might not exists), @b: album tag\n"
       "      @t: title tag, @n: track number identifier, @N: track tag number\n"
       "      (a digit may follow the 'n' or 'N' for the number of digits to output),\n"
-      "      @f: original filename, @g: genre"));
-  print_message(
-    _(" -g + TAGS: custom tags for the split files.\n"
+      "      @f: original filename, @g: genre\n"
+      " -d + DIRNAME: to put all output files in the directory DIRNAME.\n"
+      " -P   Pretend to split: simulation of the process, without creating any files\n"
+      "      or directories\n"
+      " -O + TIME: Overlap split files with TIME (slower).\n"
+      " -E + CUE_FILE: export splitpoints to CUE file (use with -P if needed)\n"
+      " -M   Decode and write MD5 checksum for output flac files.\n"
+      "\n"
+      "(tag options)\n"
+      " -T + TAGS_VERSION: for mp3 files, force output tags as version 1, 2 or 1 & 2.\n"
+      "      TAGS_VERSION can be 1, 2 or 12 (default is to set the same version as\n"
+      "      the file to split\n"
+      " -C + ENCODING: Set output encoding for ID3v2 strings. ENCODING can be 1 (LATIN1),\n"
+      "      8 (UTF-8), or 16 (UTF-16).\n"
+      " -I + ENCODING: Set input encoding for ID3v2 strings.\n"
+      " -b   [Experimental] Bit reservoir handling for gapless playback (mp3 only).\n"
+      " -g + TAGS: custom tags for the split files.\n"
       "      TAGS can contain those variables: \n"
       "         @a, @b, @t, @y, @c, @n, @g, @o (set original tags),\n"
       "         @N (auto increment track number).\n"
       "      TAGS format is like [@a=artist1,@t=title1]%[@o,@N=2,@a=artist2]\n"
-      "       (% means that we set the tags for all remaining files)"));
-  print_message(_(
-    " -G + regex=REGEX: set tags from input filename. REGEX defines how to extract\n"
-    "      the tags from the filename. It can contain those variables:\n"
-    //"       (?<tracks>),\n"
-    "         (?<artist>), (?<album>), (?<title>), (?<tracknum>), (?<year>), (?<comment>), (?<genre>)"));
-  print_message(
-    _(" -d + DIRNAME: to put all output files in the directory DIRNAME.\n"
-      " -k   Consider input not seekable (slower). Default when input is STDIN (-).\n"
-      " -O + TIME: Overlap split files with TIME (slower)."));
-  print_message(
-    _(" -n   No Tag: does not write ID3v1 or vorbis comment. If you need clean files.\n"
+      "         (% means that we set the tags for all remaining files)\n"
+      " -G + regex=REGEX: set tags from input filename. REGEX defines how to extract\n"
+      "      the tags from the filename. It can contain those variables:\n"
+      "         (?<artist>), (?<album>), (?<title>), (?<tracknum>),\n"
+      "         (?<year>), (?<comment>), (?<genre>)\n"
+      " -n   No Tag: does not write ID3v1 or vorbis comment. If you need clean files.\n"
       " -x   No Xing header: does not write the Xing header. Use with -n if you wish\n"
       "      to concatenate the split files\n"
-      " -N   Don't create the 'mp3splt.log' log file when using '-s'."));
-  print_message(
-    _(" -P   Pretend to split: simulation of the process, without creating any\n"
-      "      files or directories"));
-  print_message(_(" -E + CUE_FILE: export splitpoints to CUE file (use with -P if needed)"));
-  print_message(
-    _(" -q   Quiet mode: try not to prompt (if possible) and print less messages.\n"
+      "\n"
+      "(logging options)\n"
+      " -N   Don't create the \"mp3splt.log\" log file when using \"-s\".\n"
+      " -F + FILENAME: Write log of detected silences to the specified file.\n"
+      " -q   Quiet mode: try not to prompt (if possible) and print less messages.\n"
       " -Q   Very quiet mode: don't print anything to stdout and no progress bar\n"
-      "       (also enables -q).\n"
-      " -D   Debug mode: used to debug the program.\n\n"
+      "      (also enables -q).\n"
+      " -D   Debug mode: used to debug the program.\n"
+      "\n"
       "      Please read man page for complete documentation.\n"));
 
   if (console_out == stderr) { exit(1); }
