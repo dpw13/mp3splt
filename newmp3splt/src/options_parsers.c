@@ -26,8 +26,8 @@
 #include "print_utils.h"
 #include "utils.h"
 
-int parse_silence_options(char *arg, float *th, int *gap, int *nt, float *off, int *rm, float *min,
-  float *min_track_length, int *shots, float *min_track_join, float *keep_silence_left,
+int parse_silence_options(char *arg, float *th, int *ent, int *gap, int *nt, float *off, int *rm,
+  float *min, float *min_track_length, int *shots, float *min_track_join, float *keep_silence_left,
   float *keep_silence_right, int *warn_if_no_auto_adjust, int *err_if_no_auto_adjust)
 {
   int found = 0;
@@ -68,6 +68,15 @@ int parse_silence_options(char *arg, float *th, int *gap, int *nt, float *off, i
       {
         if (sscanf(ptr + 1, "%f", th) == 1) { found++; }
         else { print_warning(_("bad threshold argument. It will be ignored !")); }
+      }
+    }
+
+    if ((ent != NULL) && (strncmp(var, "ent", 3) == 0))
+    {
+      if (ptr != NULL)
+      {
+        if (sscanf(ptr + 1, "%d", ent) == 1) { found++; }
+        else { print_warning(_("bad minimum entropy argument. It will be ignored !")); }
       }
     }
 

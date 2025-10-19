@@ -160,7 +160,7 @@ int splt_pl_scan_silence(splt_state *state, int *error)
   flacstate->off = offset;
 
   int found = splt_flac_scan_silence(
-    state, 0, 0, threshold, min_length, shots, 1, error, splt_scan_silence_processor);
+    state, 0, 0, threshold, -1, min_length, shots, 1, error, splt_scan_silence_processor);
   if (*error < 0) { return -1; }
 
   return found;
@@ -171,8 +171,8 @@ int splt_pl_scan_trim_silence(splt_state *state, int *error)
   float threshold = splt_o_get_float_option(state, SPLT_OPT_PARAM_THRESHOLD);
   int shots = splt_o_get_int_option(state, SPLT_OPT_PARAM_SHOTS);
 
-  int found =
-    splt_flac_scan_silence(state, 0, 0, threshold, 0, shots, 1, error, splt_trim_silence_processor);
+  int found = splt_flac_scan_silence(
+    state, 0, 0, threshold, -1, 0, shots, 1, error, splt_trim_silence_processor);
   if (*error < 0) { return -1; }
 
   return found;

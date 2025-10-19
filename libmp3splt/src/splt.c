@@ -95,6 +95,8 @@ static long splt_s_split(splt_state *state, int first_splitpoint, int second_spl
     save_end_point = SPLT_FALSE;
   }
 
+  printf("Split %d:%d (%ld:%ld)\n", first_splitpoint, second_splitpoint, split_begin, split_end);
+
   if (get_error == SPLT_OK)
   {
     //if no error
@@ -121,8 +123,9 @@ static long splt_s_split(splt_state *state, int first_splitpoint, int second_spl
       }
       else
       {
-        splt_e_set_error_data_from_splitpoint(state, split_begin);
-        *error = SPLT_ERROR_EQUAL_SPLITPOINTS;
+        new_end_point = split_end;
+        //splt_e_set_error_data_from_splitpoint(state, split_begin);
+        //*error = SPLT_ERROR_EQUAL_SPLITPOINTS;
       }
     }
   }
@@ -623,8 +626,9 @@ int splt_s_set_trim_silence_splitpoints(splt_state *state, int *error)
   if (!splt_o_get_int_option(state, SPLT_OPT_QUIET_MODE))
   {
     splt_c_put_info_message_to_client(state,
-      _(" Trim silence split - Th: %.1f dB, Min: %.2f sec\n"),
+      _(" Trim silence split - Th: %.1f dB or %d bits, Min: %.2f sec\n"),
       splt_o_get_float_option(state, SPLT_OPT_PARAM_THRESHOLD),
+      splt_o_get_int_option(state, SPLT_OPT_PARAM_MIN_ENTROPY),
       splt_o_get_float_option(state, SPLT_OPT_PARAM_MIN_LENGTH));
   }
 
@@ -801,10 +805,11 @@ int splt_s_set_silence_splitpoints(splt_state *state, int *error)
     }
 
     splt_c_put_info_message_to_client(state,
-      _(" Silence split type: %s mode (Th: %.1f dB,"
+      _(" Silence split type: %s mode (Th: %.1f dB or %d bits,"
         " Off: %.2f, Min: %.2f, Remove: %s, Min track: %.2f, Shots: %d%s)\n"),
       auto_user_str,
       splt_o_get_float_option(state, SPLT_OPT_PARAM_THRESHOLD),
+      splt_o_get_int_option(state, SPLT_OPT_PARAM_MIN_ENTROPY),
       splt_o_get_float_option(state, SPLT_OPT_PARAM_OFFSET),
       splt_o_get_float_option(state, SPLT_OPT_PARAM_MIN_LENGTH),
       remove_str,
@@ -866,10 +871,10 @@ int splt_s_set_silence_splitpoints(splt_state *state, int *error)
     if (found > 0)
     {
       int selected_tracks = found + 1;
-      int param_number_of_tracks = splt_o_get_int_option(state, SPLT_OPT_PARAM_NUMBER_TRACKS);
-      if (param_number_of_tracks > 0) { selected_tracks = param_number_of_tracks; }
+      if (number_tracks > 0) { selected_tracks = number_tracks; }
 
-      splt_c_put_info_message_to_client(state, _(" (Selected %d tracks)\n"), selected_tracks);
+      splt_c_put_info_message_to_client(
+        state, _(" (Selected %d/%d tracks)\n"), selected_tracks, number_tracks);
     }
     else { splt_c_put_info_message_to_client(state, "\n"); }
 
@@ -1017,8 +1022,9 @@ int splt_s_set_silence_splitpoints(splt_state *state, int *error)
             //do the effective write
             struct splt_ssplit *temp = state->silence_list;
             fprintf(log_file, "%s\n", splt_t_get_filename_to_split(state));
-            fprintf(log_file, "%.2f\t%.2f\t%d\n",
+            fprintf(log_file, "%.2f\t%d\t%.2f\t%d\n",
               splt_o_get_float_option(state, SPLT_OPT_PARAM_THRESHOLD),
+              splt_o_get_int_option(state, SPLT_OPT_PARAM_MIN_ENTROPY),
               splt_o_get_float_option(state, SPLT_OPT_PARAM_MIN_LENGTH),
               splt_o_get_int_option(state, SPLT_OPT_PARAM_SHOTS));
             while (temp != NULL)
@@ -1112,7 +1118,9 @@ void splt_s_trim_silence_split(splt_state *state, int *error)
     return;
   }
 
-  splt_d_print_debug(state, "Writing tracks...\n");
+  splt_d_print_debug(state, "Found %d splits, writing tracks...\n", found);
+
+  splt_sp_skip_minimum_track_length_splitpoints(state, error);
 
   int output_filenames = splt_o_get_int_option(state, SPLT_OPT_OUTPUT_FILENAMES);
   if (output_filenames == SPLT_OUTPUT_DEFAULT)

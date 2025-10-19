@@ -30,15 +30,12 @@
 #include "flac_silence.h"
 
 static void splt_flac_scan_silence_and_process(splt_state *state, off_t start_offset,
-  float max_threshold, unsigned long length,
-  short process_silence(double time, float level, int silence_was_found, short must_flush,
-    splt_scan_silence_data *ssd, int *found, int *error),
-  splt_scan_silence_data *ssd, int *error);
+  float max_threshold, int min_bits, unsigned long length,
+  splt_scan_silence_processor_t process_silence, splt_scan_silence_data *ssd, int *error);
 
 int splt_flac_scan_silence(splt_state *state, off_t start_offset, unsigned long length,
-  float threshold, float min, int shots, short output, int *error,
-  short silence_processor(double time, float level, int silence_was_found, short must_flush,
-    splt_scan_silence_data *ssd, int *found, int *error))
+  float threshold, int min_bits, float min, int shots, short output, int *error,
+  splt_scan_silence_processor_t silence_processor)
 {
   splt_scan_silence_data *ssd = splt_scan_silence_data_new(state, output, min, shots, SPLT_TRUE);
   if (ssd == NULL)
@@ -48,7 +45,7 @@ int splt_flac_scan_silence(splt_state *state, off_t start_offset, unsigned long 
   }
 
   splt_flac_scan_silence_and_process(
-    state, start_offset, threshold, length, silence_processor, ssd, error);
+    state, start_offset, threshold, min_bits, length, silence_processor, ssd, error);
 
   int found = ssd->found;
 
@@ -127,10 +124,8 @@ static void splt_flac_error_callback(
 }
 
 static void splt_flac_scan_silence_and_process(splt_state *state, off_t start_offset,
-  float max_threshold, unsigned long length,
-  short process_silence(double time, float level, int silence_was_found, short must_flush,
-    splt_scan_silence_data *ssd, int *found, int *error),
-  splt_scan_silence_data *ssd, int *error)
+  float max_threshold, int min_bits, unsigned long length,
+  splt_scan_silence_processor_t process_silence, splt_scan_silence_data *ssd, int *error)
 {
   splt_c_put_progress_text(state, SPLT_PROGRESS_SCAN_SILENCE);
 
@@ -212,8 +207,8 @@ static void splt_flac_scan_silence_and_process(splt_state *state, off_t start_of
 
     short must_flush = length > 0 && current_time >= length;
     int err = SPLT_OK;
-    short stop = process_silence(
-      silence_data->time, level, silence_data->silence_found, must_flush, ssd, &found, &err);
+    short stop = process_silence(silence_data->time, level, min_bits, silence_data->silence_found,
+      must_flush, ssd, &found, &err);
     if (stop || stop == -1)
     {
       if (err < 0)
@@ -230,6 +225,7 @@ static void splt_flac_scan_silence_and_process(splt_state *state, off_t start_of
         (long)(silence_data->time * 100.0), level, state->split.silence_level_client_data);
     }
     state->split.p_bar->silence_db_level = level;
+    state->split.p_bar->silence_ent_bits = 0; // TODO: unimplemented
     state->split.p_bar->silence_found_tracks = found;
 
     if (option_silence_mode)

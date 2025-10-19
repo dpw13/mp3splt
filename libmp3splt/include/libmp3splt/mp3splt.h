@@ -516,6 +516,18 @@ typedef enum
    */
   SPLT_OPT_PARAM_THRESHOLD,
   /**
+   * The minimum number of bits in a single set of DCT coefficients (both channels if stereo,
+   * or a single mp3 granule) to be considered silence.
+   *
+   * Min entropy is used when having a #SPLT_OPTION_SILENCE_MODE, #SPLT_OPTION_TRIM_SILENCE_MODE
+   * or #SPLT_OPT_AUTO_ADJUST option.
+   *
+   * Int option that can take values from -1 (ignore bit length check) to any positive integer.
+   *
+   * Default is #SPLT_DEFAULT_PARAM_MIN_ENTROPY
+   */
+  SPLT_OPT_PARAM_MIN_ENTROPY,
+  /**
    * Offset of cutpoint inside the silence part when having a
    * #SPLT_OPTION_SILENCE_MODE or #SPLT_OPT_AUTO_ADJUST option
    *
@@ -807,6 +819,10 @@ typedef enum
  * @brief Default value for the #SPLT_OPT_PARAM_THRESHOLD option
  */
 #define SPLT_DEFAULT_PARAM_THRESHOLD -48.0
+/**
+ * @brief Default value for the #SPLT_OPT_PARAM_MIN_ENTROPY option
+ */
+#define SPLT_DEFAULT_PARAM_MIN_ENTROPY -1
 /**
  * @brief Default value for the #SPLT_OPT_PARAM_OFFSET option
  */
@@ -1281,6 +1297,11 @@ int mp3splt_progress_get_silence_found_tracks(const splt_progress *p_bar);
  * @return The audio threshold level.
  */
 float mp3splt_progress_get_silence_db_level(const splt_progress *p_bar);
+
+/**
+ * @return The count of entropy bits.
+ */
+int mp3splt_progress_get_silence_ent_bits(const splt_progress *p_bar);
 
 /**
  * @return The progress percentage between 0 and 1.

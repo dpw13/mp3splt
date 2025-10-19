@@ -143,16 +143,19 @@ void put_progress_bar(splt_progress *p_bar, void *user_data)
       break;
     case SPLT_PROGRESS_SCAN_SILENCE:;
       int silence_found_tracks = mp3splt_progress_get_silence_found_tracks(p_bar);
+      int silence_ent_bits = mp3splt_progress_get_silence_ent_bits(p_bar);
       float silence_db_level = mp3splt_progress_get_silence_db_level(p_bar);
       if (silence_found_tracks > 0)
       {
-        snprintf(progress_text, 2047, _("S: %02d, Level: %.2f dB; scanning for silence..."),
-          silence_found_tracks, silence_db_level);
+        snprintf(progress_text, 2047,
+          _("S: %02d, Level: %.2f dB, Entropy: %d bits; scanning for silence..."),
+          silence_found_tracks, silence_db_level, silence_ent_bits);
       }
       else
       {
-        snprintf(
-          progress_text, 2047, _("Level: %.2f dB; scanning for silence..."), silence_db_level);
+        snprintf(progress_text, 2047,
+          _("Level: %.2f dB, Entropy: %d bits; scanning for silence..."), silence_db_level,
+          silence_ent_bits);
       }
       break;
     default:

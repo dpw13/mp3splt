@@ -172,6 +172,7 @@ typedef struct
   struct mad_synth synth;
   //internally used by the silence detection functions
   mad_fixed_t temp_level;
+  int temp_ent;
   //the offset
   float off;
   //used internally when reading the file

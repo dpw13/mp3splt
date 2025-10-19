@@ -26,8 +26,8 @@
 
 #include "silence_processors.h"
 
-static void write_to_full_log(splt_state *state, double time, float level, int shots, int found,
-  double begin_position, double end_position);
+static void write_to_full_log(splt_state *state, double time, int flush, int silence, float level,
+  int min_bits, int shots, int found, double begin_position, double end_position);
 
 splt_scan_silence_data *splt_scan_silence_data_new(
   splt_state *state, short first, float min, int shots, short set_new_length)
@@ -62,8 +62,53 @@ void splt_free_scan_silence_data(splt_scan_silence_data **ssd)
   *ssd = NULL;
 }
 
-short splt_scan_silence_processor(double time, float level, int silence_was_found, short must_flush,
-  splt_scan_silence_data *ssd, int *found_silence_points, int *error)
+short splt_scan_silence_processor2(double time, float level, int min_bits, int silence_was_found,
+  short must_flush, splt_scan_silence_data *ssd, int *found_silence_points, int *error)
+{
+  short stop = SPLT_FALSE;
+
+  if (must_flush || time < 0)
+  {
+    ssd->flush = SPLT_TRUE;
+    stop = SPLT_TRUE;
+  }
+
+  if (silence_was_found || ssd->flush)
+  {
+    if ((time - ssd->silence_end) > ssd->min)
+    {
+      /* Only keep intervals of non-silence larger than the minimum. The time from
+       * silence_begin to silence_end is the discarded splice.
+       */
+      printf("\n%f: discarding %f:%f, keeping %f:%f\n", time, ssd->silence_begin, ssd->silence_end,
+        ssd->silence_end, time);
+      if (splt_siu_ssplit_new(&ssd->state->silence_list, ssd->silence_end, time, ssd->len, error) ==
+          -1)
+      {
+        printf("Error creating split: %d", *error);
+        ssd->found = -1;
+        *found_silence_points = ssd->found;
+
+        return SPLT_TRUE;
+      }
+
+      /* Current point is new start */
+      ssd->silence_begin = time;
+      ssd->found++;
+    }
+    /* Keep track of this time as the most recent splice point. */
+    ssd->silence_end = time;
+  }
+
+  *found_silence_points = ssd->found;
+  write_to_full_log(ssd->state, time, ssd->flush, silence_was_found, level, min_bits, ssd->shot,
+    ssd->found, ssd->silence_begin, ssd->silence_end);
+
+  return stop;
+}
+
+short splt_scan_silence_processor(double time, float level, int min_bits, int silence_was_found,
+  short must_flush, splt_scan_silence_data *ssd, int *found_silence_points, int *error)
 {
   if (time < 0) { return SPLT_TRUE; }
 
@@ -87,7 +132,8 @@ short splt_scan_silence_processor(double time, float level, int silence_was_foun
 
     *found_silence_points = ssd->found;
 
-    write_to_full_log(ssd->state, time, level, ssd->shot, ssd->found, -1, -1);
+    write_to_full_log(ssd->state, time, ssd->flush, silence_was_found, level, min_bits, ssd->shot,
+      ssd->found, ssd->silence_begin, ssd->silence_end);
     return stop;
   }
 
@@ -111,14 +157,15 @@ short splt_scan_silence_processor(double time, float level, int silence_was_foun
 
       if ((end_position - begin_position - ssd->min) >= 0.f)
       {
+        printf("%f: new split %f:%f min %f\n", time, begin_position, end_position, ssd->min);
         if (splt_siu_ssplit_new(
               &ssd->state->silence_list, begin_position, end_position, ssd->len, error) == -1)
         {
           ssd->found = -1;
           *found_silence_points = ssd->found;
 
-          write_to_full_log(
-            ssd->state, time, level, ssd->shot, ssd->found, begin_position, end_position);
+          write_to_full_log(ssd->state, time, ssd->flush, silence_was_found, level, min_bits,
+            ssd->shot, ssd->found, ssd->silence_begin, ssd->silence_end);
           return SPLT_TRUE;
         }
 
@@ -133,7 +180,8 @@ short splt_scan_silence_processor(double time, float level, int silence_was_foun
 
   if (ssd->flush)
   {
-    write_to_full_log(ssd->state, time, level, ssd->shot, ssd->found, begin_position, end_position);
+    write_to_full_log(ssd->state, time, ssd->flush, silence_was_found, level, min_bits, ssd->shot,
+      ssd->found, ssd->silence_begin, ssd->silence_end);
     return -1;
   }
 
@@ -145,28 +193,31 @@ short splt_scan_silence_processor(double time, float level, int silence_was_foun
 
   *found_silence_points = ssd->found;
 
-  write_to_full_log(ssd->state, time, level, ssd->shot, ssd->found, begin_position, end_position);
+  write_to_full_log(ssd->state, time, ssd->flush, silence_was_found, level, min_bits, ssd->shot,
+    ssd->found, ssd->silence_begin, ssd->silence_end);
   return stop;
 }
 
-static void write_to_full_log(splt_state *state, double time, float level, int shots, int found,
-  double begin_position, double end_position)
+static void write_to_full_log(splt_state *state, double time, int flush, int silence, float level,
+  int bits, int shots, int found, double begin_position, double end_position)
 {
   FILE *full_log_file_descriptor = splt_t_get_silence_full_log_file_descriptor(state);
   if (!full_log_file_descriptor) { return; }
 
   if (begin_position > 0 && end_position > 0)
   {
-    fprintf(full_log_file_descriptor, "0\t%lf\t%f\t%d\t%d\t%lf\t%lf\n", time, level, shots, found,
-      begin_position, end_position);
+    fprintf(full_log_file_descriptor, "0\t%lf\t%d\t%d\t%f\t%d\t%d\t%d\t%lf\t%lf\n", time, flush,
+      silence, level, bits, shots, found, begin_position, end_position);
     return;
   }
 
-  fprintf(full_log_file_descriptor, "0\t%lf\t%f\t%d\t%d\t\t\n", time, level, shots, found);
+  fprintf(full_log_file_descriptor, "0\t%lf\t%d\t%d\t%f\t%d\t%d\t%d\t\t\n", time, flush, silence,
+    level, bits, shots, found);
 }
 
-static short splt_detect_where_begin_silence_ends(double time, float level, int silence_was_found,
-  short must_flush, splt_scan_silence_data *ssd, int *found_silence_points, int *error)
+static short splt_detect_where_begin_silence_ends(double time, float level, int bits,
+  int silence_was_found, short must_flush, splt_scan_silence_data *ssd, int *found_silence_points,
+  int *error)
 {
   if (silence_was_found)
   {
@@ -197,8 +248,8 @@ static short splt_detect_where_begin_silence_ends(double time, float level, int 
 
     if (splt_siu_ssplit_new(&ssd->state->silence_list, silence_end, silence_end, 0, error) == -1)
     {
-      write_to_full_log(
-        ssd->state, time, level, ssd->shot, ssd->found, silence_for_log, silence_for_log);
+      write_to_full_log(ssd->state, time, ssd->flush, silence_was_found, level, bits, ssd->shot,
+        ssd->found, silence_for_log, silence_for_log);
       return SPLT_TRUE;
     }
 
@@ -209,13 +260,14 @@ static short splt_detect_where_begin_silence_ends(double time, float level, int 
 
   if (ssd->shot > 0) { ssd->shot--; }
 
-  write_to_full_log(
-    ssd->state, time, level, ssd->shot, ssd->found, silence_for_log, silence_for_log);
+  write_to_full_log(ssd->state, time, ssd->flush, silence_was_found, level, bits, ssd->shot,
+    ssd->found, silence_for_log, silence_for_log);
   return SPLT_FALSE;
 }
 
-static short splt_detect_where_end_silence_begins(double time, float level, int silence_was_found,
-  short must_flush, splt_scan_silence_data *ssd, int *found_silence_points, int *error)
+static short splt_detect_where_end_silence_begins(double time, float level, int bits,
+  int silence_was_found, short must_flush, splt_scan_silence_data *ssd, int *found_silence_points,
+  int *error)
 {
   double silence_for_log = -1;
 
@@ -240,15 +292,15 @@ static short splt_detect_where_end_silence_begins(double time, float level, int 
     if (splt_siu_ssplit_new(&ssd->state->silence_list, silence_begin, silence_begin, 0, error) ==
         -1)
     {
-      write_to_full_log(
-        ssd->state, time, level, ssd->shot, ssd->found, silence_for_log, silence_for_log);
+      write_to_full_log(ssd->state, time, ssd->flush, silence_was_found, level, bits, ssd->shot,
+        ssd->found, silence_for_log, silence_for_log);
       return SPLT_TRUE;
     }
 
     ssd->found++;
 
-    write_to_full_log(
-      ssd->state, time, level, ssd->shot, ssd->found, silence_for_log, silence_for_log);
+    write_to_full_log(ssd->state, time, ssd->flush, silence_was_found, level, bits, ssd->shot,
+      ssd->found, silence_for_log, silence_for_log);
     return SPLT_TRUE;
   }
 
@@ -266,8 +318,8 @@ static short splt_detect_where_end_silence_begins(double time, float level, int 
 
     if (ssd->shot < ssd->number_of_shots) { ssd->shot += 2; }
 
-    write_to_full_log(
-      ssd->state, time, level, ssd->shot, ssd->found, silence_for_log, silence_for_log);
+    write_to_full_log(ssd->state, time, ssd->flush, silence_was_found, level, bits, ssd->shot,
+      ssd->found, silence_for_log, silence_for_log);
     return SPLT_FALSE;
   }
   else if (ssd->continue_after_silence) { ssd->silence_begin = time; }
@@ -290,24 +342,64 @@ static short splt_detect_where_end_silence_begins(double time, float level, int 
 
   if (ssd->shot > 0) { ssd->shot--; }
 
-  write_to_full_log(
-    ssd->state, time, level, ssd->shot, ssd->found, silence_for_log, silence_for_log);
+  write_to_full_log(ssd->state, time, ssd->flush, silence_was_found, level, bits, ssd->shot,
+    ssd->found, silence_for_log, silence_for_log);
   return SPLT_FALSE;
 }
 
-short splt_trim_silence_processor(double time, float level, int silence_was_found, short must_flush,
-  splt_scan_silence_data *ssd, int *found_silence_points, int *error)
+short splt_trim_silence_processor(double time, float level, int bits, int silence_was_found,
+  short must_flush, splt_scan_silence_data *ssd, int *found_silence_points, int *error)
 {
   if (!ssd->silence_begin_was_found)
   {
     splt_detect_where_begin_silence_ends(
-      time, level, silence_was_found, must_flush, ssd, found_silence_points, error);
+      time, level, bits, silence_was_found, must_flush, ssd, found_silence_points, error);
   }
   else
   {
     splt_detect_where_end_silence_begins(
-      time, level, silence_was_found, must_flush, ssd, found_silence_points, error);
+      time, level, bits, silence_was_found, must_flush, ssd, found_silence_points, error);
   }
 
   return SPLT_FALSE;
+}
+
+/* Trim processor should generate splits for *each* silence. Intervals between silences will
+ * be included or excluded based on length.
+ */
+short splt_trim_silence_processor2(double time, float level, int min_bits, int silence_was_found,
+  short must_flush, splt_scan_silence_data *ssd, int *found_silence_points, int *error)
+{
+  short stop = SPLT_FALSE;
+
+  if (must_flush || time < 0)
+  {
+    ssd->flush = SPLT_TRUE;
+    stop = SPLT_TRUE;
+  }
+
+  if (!silence_was_found && ssd->silence_begin >= 0.0)
+  {
+    if (splt_siu_ssplit_new(&ssd->state->silence_list, ssd->silence_begin, time, ssd->len, error) ==
+        -1)
+    {
+      printf("Error creating split: %d", *error);
+      ssd->found = -1;
+      *found_silence_points = ssd->found;
+
+      return SPLT_TRUE;
+    }
+
+    /* Current point is new start */
+    ssd->silence_begin = -1.0;
+    ssd->found++;
+  }
+
+  if (silence_was_found && ssd->silence_begin < 0.0) { ssd->silence_begin = time; }
+
+  *found_silence_points = ssd->found;
+  write_to_full_log(ssd->state, time, ssd->flush, silence_was_found, level, min_bits, ssd->shot,
+    ssd->found, ssd->silence_begin, ssd->silence_end);
+
+  return stop;
 }

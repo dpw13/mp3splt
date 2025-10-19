@@ -48,6 +48,7 @@ void splt_o_set_options_default_values(splt_state *state)
   state->options.option_input_not_seekable = SPLT_FALSE;
   state->options.create_dirs_from_filenames = SPLT_FALSE;
   state->options.parameter_threshold = SPLT_DEFAULT_PARAM_THRESHOLD;
+  state->options.parameter_min_entropy = SPLT_DEFAULT_PARAM_MIN_ENTROPY;
   state->options.parameter_offset = SPLT_DEFAULT_PARAM_OFFSET;
   state->options.parameter_number_tracks = SPLT_DEFAULT_PARAM_TRACKS;
   state->options.parameter_shots = SPLT_DEFAULT_PARAM_SHOTS;
@@ -196,6 +197,9 @@ void splt_o_set_option(splt_state *state, int option_name, const void *data)
     case SPLT_OPT_PARAM_THRESHOLD:
       state->options.parameter_threshold = *((float *)data);
       break;
+    case SPLT_OPT_PARAM_MIN_ENTROPY:
+      state->options.parameter_min_entropy = *((int *)data);
+      break;
     case SPLT_OPT_PARAM_OFFSET:
       state->options.parameter_offset = *((float *)data);
       break;
@@ -321,6 +325,8 @@ static void *splt_o_get_option(splt_state *state, int option_name)
       return &state->options.split_time;
     case SPLT_OPT_PARAM_THRESHOLD:
       return &state->options.parameter_threshold;
+    case SPLT_OPT_PARAM_MIN_ENTROPY:
+      return &state->options.parameter_min_entropy;
     case SPLT_OPT_PARAM_OFFSET:
       return &state->options.parameter_offset;
     case SPLT_OPT_PARAM_MIN_LENGTH:

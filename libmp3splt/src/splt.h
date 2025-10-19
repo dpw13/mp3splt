@@ -276,6 +276,8 @@ struct splt_progres
   int silence_found_tracks;
   //! The silence leven in dB
   float silence_db_level;
+  //! The number of entropy bits
+  float silence_ent_bits;
   //! A pointer to the callback function
   void (*progress)(struct splt_progres *, void *);
   void *progress_cb_data;
@@ -399,6 +401,10 @@ typedef struct
 
    (is a float number between -96 and 0. Default is -48 dB)*/
   float parameter_threshold;
+  /*! the number of coefficient bits to consider a frame silent
+
+   Ranges from -1 (disabled) to any positive integer. */
+  int parameter_min_entropy;
   /*! the offset of cutpoint in silence
 
     Float number between -2 and 2 and allows you to adjust the offset

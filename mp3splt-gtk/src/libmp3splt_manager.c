@@ -169,8 +169,9 @@ static gboolean lmanager_change_window_progress_bar_idle(ui_with_p_bar *ui_p_bar
       }
       else
       {
-        g_snprintf(progress_text, 1023, _("S: %02d, Level: %.2f dB; scanning for silence..."),
-          ui_p_bar->silence_found_tracks, ui_p_bar->silence_db_level);
+        g_snprintf(progress_text, 1023,
+          _("S: %02d, Level: %.2f dB, Entropy: %d bits; scanning for silence..."),
+          ui_p_bar->silence_found_tracks, ui_p_bar->silence_db_level, ui_p_bar->silence_ent_bits);
       }
       break;
     default:
@@ -204,6 +205,7 @@ static void lmanager_change_window_progress_bar(splt_progress *p_bar, void *data
   ui_p_bar->max_splits = mp3splt_progress_get_max_splits(p_bar);
   ui_p_bar->silence_found_tracks = mp3splt_progress_get_silence_found_tracks(p_bar);
   ui_p_bar->silence_db_level = mp3splt_progress_get_silence_db_level(p_bar);
+  ui_p_bar->silence_ent_bits = mp3splt_progress_get_silence_ent_bits(p_bar);
   ui_p_bar->percent_progress = mp3splt_progress_get_percent_progress(p_bar);
 
   add_idle(

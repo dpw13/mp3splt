@@ -47,11 +47,19 @@ typedef struct
   double previous_time;
 } splt_scan_silence_data;
 
-short splt_scan_silence_processor(double time, float level, int silence_was_found, short must_flush,
-  splt_scan_silence_data *data, int *found_silence_points, int *error);
+typedef short (*splt_scan_silence_processor_t)(double time, float level, int min_bits,
+  int silence_was_found, short must_flush, splt_scan_silence_data *data, int *found_silence_points,
+  int *error);
 
-short splt_trim_silence_processor(double time, float level, int silence_was_found, short must_flush,
-  splt_scan_silence_data *data, int *found_silence_points, int *error);
+short splt_scan_silence_processor(double time, float level, int min_bits, int silence_was_found,
+  short must_flush, splt_scan_silence_data *data, int *found_silence_points, int *error);
+short splt_scan_silence_processor2(double time, float level, int min_bits, int silence_was_found,
+  short must_flush, splt_scan_silence_data *data, int *found_silence_points, int *error);
+
+short splt_trim_silence_processor(double time, float level, int min_bits, int silence_was_found,
+  short must_flush, splt_scan_silence_data *data, int *found_silence_points, int *error);
+short splt_trim_silence_processor2(double time, float level, int min_bits, int silence_was_found,
+  short must_flush, splt_scan_silence_data *data, int *found_silence_points, int *error);
 
 splt_scan_silence_data *splt_scan_silence_data_new(
   splt_state *state, short first, float min, int shots, short set_new_length);

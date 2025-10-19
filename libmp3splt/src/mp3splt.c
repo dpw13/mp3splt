@@ -532,6 +532,11 @@ int mp3splt_progress_get_silence_found_tracks(const splt_progress *p_bar)
   return p_bar->silence_found_tracks;
 }
 
+int mp3splt_progress_get_silence_ent_bits(const splt_progress *p_bar)
+{
+  return p_bar->silence_ent_bits;
+}
+
 float mp3splt_progress_get_silence_db_level(const splt_progress *p_bar)
 {
   return p_bar->silence_db_level;
@@ -1180,8 +1185,9 @@ splt_code mp3splt_split(splt_state *state)
         {
           splt_c_put_info_message_to_client(state,
             _(" Working with SILENCE AUTO-ADJUST (Threshold:"
-              " %.1f dB Gap: %d sec Offset: %.2f Min: %.2f sec)\n"),
+              " %.1f dB or %d bits Gap: %d sec Offset: %.2f Min: %.2f sec)\n"),
             splt_o_get_float_option(state, SPLT_OPT_PARAM_THRESHOLD),
+            splt_o_get_int_option(state, SPLT_OPT_PARAM_MIN_ENTROPY),
             splt_o_get_int_option(state, SPLT_OPT_PARAM_GAP),
             splt_o_get_float_option(state, SPLT_OPT_PARAM_OFFSET),
             splt_o_get_float_option(state, SPLT_OPT_PARAM_MIN_LENGTH));

@@ -55,7 +55,7 @@ windows_cross_installers:
 root_install: root_libmp3splt root_newmp3splt root_mp3splt-gtk
 root_libmp3splt:
 	cd ${LIBMP3SPLT_DIR} && ./autogen.sh && \
-	./configure ${COMMON_CONFIG_FLAGS} \
+	./configure --with-mad=/home/dwagner/git/libmad/dist ${COMMON_CONFIG_FLAGS} \
 	&& make clean && make -j8 && make install
 #
 #	&& if [ -z `grep '/usr/local/lib' /etc/ld.so.conf` ];\

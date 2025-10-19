@@ -475,12 +475,12 @@ int main(int argc, char **orig_argv)
   if (opt->p_option)
   {
     float th = -200, off = -200, min = -200, min_track_length = -200;
-    int gap = -200, nt = -200, rm = -200, shots = -200;
+    int ent = -1, gap = -200, nt = -200, rm = -200, shots = -200;
     float min_track_join = -200;
     float keep_silence_left = -200, keep_silence_right = -200;
     int warn_if_no_auto_adjust = -200, err_if_no_auto_adjust = -200;
-    int parsed_p_options = parse_silence_options(opt->param_args, &th, &gap, &nt, &off, &rm, &min,
-      &min_track_length, &shots, &min_track_join, &keep_silence_left, &keep_silence_right,
+    int parsed_p_options = parse_silence_options(opt->param_args, &th, &ent, &gap, &nt, &off, &rm,
+      &min, &min_track_length, &shots, &min_track_join, &keep_silence_left, &keep_silence_right,
       &warn_if_no_auto_adjust, &err_if_no_auto_adjust);
     if (parsed_p_options < 1)
     {
@@ -502,6 +502,10 @@ int main(int argc, char **orig_argv)
     }
     if (shots != -200) { mp3splt_set_int_option(state, SPLT_OPT_PARAM_SHOTS, shots); }
     if (th > -100) { mp3splt_set_float_option(state, SPLT_OPT_PARAM_THRESHOLD, th); }
+    if (ent > SPLT_DEFAULT_PARAM_MIN_ENTROPY)
+    {
+      mp3splt_set_int_option(state, SPLT_OPT_PARAM_MIN_ENTROPY, ent);
+    }
     if (off > -3) { mp3splt_set_float_option(state, SPLT_OPT_PARAM_OFFSET, off); }
     if (min >= 0) { mp3splt_set_float_option(state, SPLT_OPT_PARAM_MIN_LENGTH, min); }
     if (min_track_length > 0)

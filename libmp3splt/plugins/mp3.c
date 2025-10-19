@@ -1917,6 +1917,7 @@ static double splt_mp3_split(const char *output_fname, splt_state *state, double
   int adjustoption = splt_o_get_int_option(state, SPLT_OPT_PARAM_GAP);
   short seekable = !splt_o_get_int_option(state, SPLT_OPT_INPUT_NOT_SEEKABLE);
   float threshold = splt_o_get_float_option(state, SPLT_OPT_PARAM_THRESHOLD);
+  int min_entropy = splt_o_get_int_option(state, SPLT_OPT_PARAM_MIN_ENTROPY);
   float min_length = splt_o_get_float_option(state, SPLT_OPT_PARAM_MIN_LENGTH);
   int shots = splt_o_get_int_option(state, SPLT_OPT_PARAM_SHOTS);
 
@@ -2418,9 +2419,11 @@ bloc_end:
         fbegin = mp3state->fend;
       }
 
-      /*fprintf(stdout, "fbegin = %ld\n", fbegin);
+      /*
+      fprintf(stdout, "fbegin = %ld\n", fbegin);
       fprintf(stdout, "fend = %ld\n", fend);
-      fflush(stdout);*/
+      fflush(stdout);
+      */
 
       splt_mp3_extract_reservoir_and_build_reservoir_frame(mp3state, state, error);
       if (*error < 0) { goto bloc_end2; }
@@ -2525,7 +2528,7 @@ bloc_end:
         if ((adjust) && (mp3state->frames >= fend))
         {
           int silence_points_found = splt_mp3_scan_silence(state, end, 2 * adjust, threshold,
-            min_length, shots, 0, error, splt_scan_silence_processor);
+            min_entropy, min_length, shots, 0, error, splt_scan_silence_processor2);
 
           //if error, go out
           if (silence_points_found == -1) { goto bloc_end2; }
@@ -3486,14 +3489,15 @@ int splt_pl_scan_silence(splt_state *state, int *error)
 {
   float offset = splt_o_get_float_option(state, SPLT_OPT_PARAM_OFFSET);
   float threshold = splt_o_get_float_option(state, SPLT_OPT_PARAM_THRESHOLD);
+  int min_bits = splt_o_get_int_option(state, SPLT_OPT_PARAM_MIN_ENTROPY);
   float min_length = splt_o_get_float_option(state, SPLT_OPT_PARAM_MIN_LENGTH);
   int shots = splt_o_get_int_option(state, SPLT_OPT_PARAM_SHOTS);
 
   splt_mp3_state *mp3state = state->codec;
   mp3state->off = offset;
 
-  int found = splt_mp3_scan_silence(state, mp3state->mp3file.firsthead.ptr, 0, threshold,
-    min_length, shots, 1, error, splt_scan_silence_processor);
+  int found = splt_mp3_scan_silence(state, mp3state->mp3file.firsthead.ptr, 0, threshold, min_bits,
+    min_length, shots, 1, error, splt_trim_silence_processor2);
   if (*error < 0) { return -1; }
 
   return found;
@@ -3503,12 +3507,14 @@ int splt_pl_scan_silence(splt_state *state, int *error)
 int splt_pl_scan_trim_silence(splt_state *state, int *error)
 {
   float threshold = splt_o_get_float_option(state, SPLT_OPT_PARAM_THRESHOLD);
+  int min_bits = splt_o_get_int_option(state, SPLT_OPT_PARAM_MIN_ENTROPY);
+  float min_length = splt_o_get_float_option(state, SPLT_OPT_PARAM_MIN_LENGTH);
   int shots = splt_o_get_int_option(state, SPLT_OPT_PARAM_SHOTS);
 
   splt_mp3_state *mp3state = state->codec;
 
-  int found = splt_mp3_scan_silence(state, mp3state->mp3file.firsthead.ptr, 0, threshold, 0, shots,
-    1, error, splt_trim_silence_processor);
+  int found = splt_mp3_scan_silence(state, mp3state->mp3file.firsthead.ptr, 0, threshold, min_bits,
+    min_length, shots, 1, error, splt_trim_silence_processor2);
   if (*error < 0) { return -1; }
 
   return found;

@@ -47,6 +47,7 @@ typedef struct
   int current_split;
   int max_splits;
   int silence_found_tracks;
+  int silence_ent_bits;
   float silence_db_level;
   float percent_progress;
 } ui_with_p_bar;

@@ -1010,7 +1010,7 @@ void splt_flac_fr_read_and_write_frames(splt_state *state, splt_flac_frame_reade
         unsigned long length = 2 * adjust_gap_hundr;
 
         int silence_points_found = splt_flac_scan_silence(state, previous_offset, length, threshold,
-          min_length, shots, 0, error, splt_scan_silence_processor);
+          -1, min_length, shots, 0, error, splt_scan_silence_processor);
 
         if (silence_points_found > 0)
         {

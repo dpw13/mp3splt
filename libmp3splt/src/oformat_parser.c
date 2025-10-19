@@ -370,6 +370,8 @@ int splt_of_put_output_format_filename(splt_state *state, int current_split)
   {
     if (strlen(state->oformat.format[i]) == 0) { break; }
 
+    splt_d_print_debug(state, "i %d fmt '%s'\n", i, state->oformat.format[i]);
+
     //if we have some % in the format (@ has been converted to %)
     if (state->oformat.format[i][0] == '%')
     {
@@ -387,6 +389,7 @@ int splt_of_put_output_format_filename(splt_state *state, int current_split)
         goto end;
       }
       memset(temp, 0x0, temp_len);
+      splt_d_print_debug(state, "temp alloc %d -> %p\n", temp_len, temp);
 
       temp[0] = '%';
       temp[1] = 's';
