@@ -81,19 +81,20 @@ double splt_co_convert_from_db(float input)
 }
 
 //! Split a long containing a time value in 1/100s to seconds, mins and 100's
-void splt_co_get_mins_secs_hundr(long split_hundr, long *mins, long *secs, long *hundr)
+void splt_co_get_hms(long split_hundr, hms_t *out)
 {
-  long h = split_hundr % 100;
-  long split_hundr_without_h = split_hundr / 100;
-  long m = split_hundr_without_h / 60;
-  long s = split_hundr_without_h % 60;
-  if (mins) { *mins = m; }
-  if (secs) { *secs = s; }
-  if (hundr) { *hundr = h; }
+  if (out == NULL) return;
+
+  long s = split_hundr / 100;
+  long m = s / 60;
+  out->hour = m / 60;
+  out->min = (short)(m % 60);
+  out->sec = (short)(s % 60);
+  out->msec = (short)(split_hundr % 100) * 10;
 }
 
 //! Convert float time in fractions of a second to a 1/100 seconds int
 long splt_co_time_to_long(double time) { return (long)(time * 100.0); }
 
 //! Convert float time in fractions of a second to a 1/100 seconds int rounding upwards
-long splt_co_time_to_long_ceil(double time) { return (long)ceil(time * 100); }
+long splt_co_time_to_long_ceil(double time) { return (long)ceil(time * 100.0); }

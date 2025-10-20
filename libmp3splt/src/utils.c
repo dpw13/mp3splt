@@ -56,12 +56,10 @@ void splt_u_print_overlap_time(splt_state *state)
   long overlap_time = splt_o_get_long_option(state, SPLT_OPT_OVERLAP_TIME);
   if (overlap_time <= 0) { return; }
 
-  long mins = -1;
-  long secs = -1;
-  long hundr = -1;
-  splt_co_get_mins_secs_hundr(overlap_time, &mins, &secs, &hundr);
+  hms_t hms;
+  splt_co_get_hms(overlap_time, &hms);
   splt_c_put_info_message_to_client(
-    state, _(" info: overlapping split files with %ld.%ld.%ld\n"), mins, secs, hundr);
+    state, _(" info: overlapping split files with " HMS_FMT "\n"), HMS_ARGS(hms));
 }
 
 /*! Is a time value [in seconds] after the end of our file?
@@ -114,10 +112,10 @@ splt_code splt_u_process_no_auto_adjust_found(splt_state *state, double point)
   if (splt_o_get_int_option(state, SPLT_OPT_WARN_IF_NO_AUTO_ADJUST_FOUND))
   {
     long time = splt_co_time_to_long(point);
-    long mins, secs, hundr;
-    splt_co_get_mins_secs_hundr(time, &mins, &secs, &hundr);
+    hms_t hms;
+    splt_co_get_hms(time, &hms);
     splt_c_put_warning_message_to_client(
-      state, _(" warning: splitpoint %ld.%ld.%ld is not auto-adjusted\n"), mins, secs, hundr);
+      state, _(" warning: splitpoint " HMS_FMT " is not auto-adjusted\n"), HMS_ARGS(hms));
   }
 
   if (splt_o_get_int_option(state, SPLT_OPT_STOP_IF_NO_AUTO_ADJUST_FOUND))

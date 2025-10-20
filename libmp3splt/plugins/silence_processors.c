@@ -238,10 +238,10 @@ static short splt_detect_where_begin_silence_ends(double time, float level, int 
       if (silence_end > min_length) { silence_end -= min_length; }
       else { silence_end = 0; }
 
-      long mins, secs, hundr;
-      splt_co_get_mins_secs_hundr(splt_co_time_to_long(silence_end), &mins, &secs, &hundr);
+      hms_t hms;
+      splt_co_get_hms(splt_co_time_to_long(silence_end), &hms);
       splt_c_put_info_message_to_client(
-        ssd->state, _(" info: trim begin split at %ldm_%.2lds_%.2ldh\n"), mins, secs, hundr);
+        ssd->state, _(" info: trim begin split at " HMS_FMT "\n"), HMS_ARGS(hms));
     }
 
     silence_for_log = silence_end;
@@ -281,10 +281,10 @@ static short splt_detect_where_end_silence_begins(double time, float level, int 
       if (ssd->previous_time - silence_begin > min_length) { silence_begin += min_length; }
       else { silence_begin = ssd->previous_time; }
 
-      long mins, secs, hundr;
-      splt_co_get_mins_secs_hundr(splt_co_time_to_long(silence_begin), &mins, &secs, &hundr);
+      hms_t hms;
+      splt_co_get_hms(splt_co_time_to_long(silence_begin), &hms);
       splt_c_put_info_message_to_client(
-        ssd->state, _(" info: trim end split at %ldm_%.2lds_%.2ldh\n"), mins, secs, hundr);
+        ssd->state, _(" info: trim end split at " HMS_FMT "\n"), HMS_ARGS(hms));
     }
 
     silence_for_log = silence_begin;

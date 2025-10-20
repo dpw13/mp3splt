@@ -122,10 +122,9 @@ void splt_ogg_get_info(splt_state *state, FILE *file_input, int *error)
         oggstate->vd->vi->channels);
 
       char total_time[256] = { '\0' };
-      int total_seconds = (int)splt_t_get_total_time(state) / 100;
-      int minutes = total_seconds / 60;
-      int seconds = total_seconds % 60;
-      snprintf(total_time, 255, _(" - Total time: %dm.%02ds"), minutes, seconds % 60);
+      hms_t hms;
+      splt_co_get_hms(splt_t_get_total_time(state), &hms);
+      snprintf(total_time, 255, _(" - Total time: " HMS_FMT), HMS_ARGS(hms));
 
       splt_c_put_info_message_to_client(state, "%s%s\n", ogg_infos, total_time);
     }

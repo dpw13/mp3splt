@@ -31,10 +31,21 @@
 
 #ifndef SPLT_CONVERSIONS_H
 
+typedef struct
+{
+  long hour;
+  short min;
+  short sec;
+  short msec;
+} hms_t;
+
+#define HMS_FMT "%ld:%02d:%02d.%03d"
+#define HMS_ARGS(x) (x).hour, (x).min, (x).sec, (x).msec
+
 long splt_co_convert_cue_line_to_hundreths(const char *s);
 float splt_co_convert_to_db(double input);
 double splt_co_convert_from_db(float input);
-void splt_co_get_mins_secs_hundr(long split_hundr, long *mins, long *secs, long *hundr);
+void splt_co_get_hms(long split_hundr, hms_t *out);
 long splt_co_time_to_long(double time);
 long splt_co_time_to_long_ceil(double time);
 

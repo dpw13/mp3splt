@@ -222,10 +222,6 @@ void splt_pl_import_internal_sheets(splt_state *state, splt_code *error)
       long offset = (long)((cue_track->offset + cue_index->offset) / (44100 / 75)) * 100;
       long hundreths = offset / 75;
       if (hundreths > max_hundreths) { max_hundreths = hundreths; }
-      //long mins, secs, hundr;
-      //splt_co_get_mins_secs_hundr(hundreths, &mins, &secs, &hundr);
-      //fprintf(stdout, "%02lu:%02lu:%02lu\n", mins, secs, hundr);
-      //fflush(stdout);
       splt_sp_append_splitpoint(state, hundreths, NULL, SPLT_SPLITPOINT);
     }
     else
@@ -273,10 +269,9 @@ static void splt_flac_get_info(
       flacstate->streaminfo.bits_per_sample);
 
     char total_time[256] = { '\0' };
-    int total_seconds = (int)splt_t_get_total_time(state) / 100;
-    int minutes = total_seconds / 60;
-    int seconds = total_seconds % 60;
-    snprintf(total_time, 255, _(" - Total time: %dm.%02ds"), minutes, seconds % 60);
+    hms_t hms;
+    splt_co_get_hms(splt_t_get_total_time(state), &hms);
+    snprintf(total_time, 255, _(" - Total time: " HMS_FMT), HMS_ARGS(hms));
 
     splt_c_put_info_message_to_client(state, "%s%s\n", flac_infos, total_time);
   }

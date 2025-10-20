@@ -473,11 +473,9 @@ static char *splt_tu_get_replaced_with_tags(const char *word, const splt_tags *t
 
   if (current_split == -1) { current_split = splt_t_get_current_split_file_number(state) - 1; }
 
-  long mins = -1;
-  long secs = -1;
-  long hundr = -1;
+  hms_t cur_hms, next_hms;
   long point_value = splt_sp_get_splitpoint_value(state, current_split, &err);
-  splt_co_get_mins_secs_hundr(point_value, &mins, &secs, &hundr);
+  splt_co_get_hms(point_value, &cur_hms);
   long next_mins = -1;
   long next_secs = -1;
   long next_hundr = -1;
@@ -487,7 +485,7 @@ static char *splt_tu_get_replaced_with_tags(const char *word, const splt_tags *t
     next_point_value = splt_sp_get_splitpoint_value(state, current_split + 1, &err);
     long total_time = splt_t_get_total_time(state);
     if (total_time > 0 && next_point_value > total_time) { next_point_value = total_time; }
-    splt_co_get_mins_secs_hundr(next_point_value, &next_mins, &next_secs, &next_hundr);
+    splt_co_get_hms(next_point_value, &next_hms);
   }
   short write_eof = SPLT_FALSE;
   if (next_point_value == LONG_MAX) { write_eof = SPLT_TRUE; }
@@ -539,22 +537,22 @@ static char *splt_tu_get_replaced_with_tags(const char *word, const splt_tags *t
       switch (*ptr)
       {
         case 's':
-          mMsShH_value = secs;
+          mMsShH_value = cur_hms.sec;
           goto put_value;
         case 'S':
-          mMsShH_value = next_secs;
+          mMsShH_value = next_hms.sec;
           goto put_value;
         case 'm':
-          mMsShH_value = mins;
+          mMsShH_value = cur_hms.min;
           goto put_value;
         case 'M':
-          mMsShH_value = next_mins;
+          mMsShH_value = next_hms.min;
           goto put_value;
         case 'h':
-          mMsShH_value = hundr;
+          mMsShH_value = cur_hms.msec / 10;
           goto put_value;
         case 'H':
-          mMsShH_value = next_hundr;
+          mMsShH_value = next_hms.msec / 10;
 put_value:
           if (!eof_written)
           {

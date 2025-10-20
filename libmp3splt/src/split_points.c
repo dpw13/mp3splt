@@ -347,14 +347,14 @@ void splt_sp_skip_minimum_track_length_splitpoints(splt_state *state, int *error
     long track_length = end_track_point - begin_track_point;
     if (track_length >= min_track_length) { continue; }
 
+    hms_t hms1, hms2;
     long mins1, secs1, hundr1;
-    splt_co_get_mins_secs_hundr(track_length, &mins1, &secs1, &hundr1);
-    long mins2, secs2, hundr2;
-    splt_co_get_mins_secs_hundr(min_track_length, &mins2, &secs2, &hundr2);
+    splt_co_get_hms(track_length, &hms1);
+    splt_co_get_hms(min_track_length, &hms2);
 
     splt_c_put_info_message_to_client(state,
-      _(" info: track too short (%ld.%ld.%ld < %ld.%ld.%ld); skipped.\n"), mins1, secs1, hundr1,
-      mins2, secs2, hundr2);
+      _(" info: track too short (" HMS_FMT " < " HMS_FMT "); skipped.\n"), HMS_ARGS(hms1),
+      HMS_ARGS(hms2));
 
     splt_sp_set_splitpoint_type(state, begin_index, SPLT_SKIPPOINT);
   }
