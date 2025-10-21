@@ -1009,38 +1009,35 @@ int splt_s_set_silence_splitpoints(splt_state *state, int *error)
 
         splt_c_put_info_message_to_client(state, _(" Writing silence log file '%s' ...\n"), fname);
 
-        if (!splt_o_get_int_option(state, SPLT_OPT_PRETEND_TO_SPLIT))
+        FILE *log_file = NULL;
+        if (!(log_file = splt_io_fopen(fname, "w")))
         {
-          FILE *log_file = NULL;
-          if (!(log_file = splt_io_fopen(fname, "w")))
+          splt_e_set_strerror_msg_with_data(state, fname);
+          *error = SPLT_ERROR_CANNOT_OPEN_FILE;
+        }
+        else
+        {
+          //do the effective write
+          struct splt_ssplit *temp = state->silence_list;
+          fprintf(log_file, "%s\n", splt_t_get_filename_to_split(state));
+          fprintf(log_file, "%.2f\t%d\t%.2f\t%d\n",
+            splt_o_get_float_option(state, SPLT_OPT_PARAM_THRESHOLD),
+            splt_o_get_int_option(state, SPLT_OPT_PARAM_MIN_ENTROPY),
+            splt_o_get_float_option(state, SPLT_OPT_PARAM_MIN_LENGTH),
+            splt_o_get_int_option(state, SPLT_OPT_PARAM_SHOTS));
+          while (temp != NULL)
           {
-            splt_e_set_strerror_msg_with_data(state, fname);
-            *error = SPLT_ERROR_CANNOT_OPEN_FILE;
+            fprintf(
+              log_file, "%f\t%f\t%ld\n", temp->begin_position, temp->end_position, temp->len);
+            temp = temp->next;
           }
-          else
+          fflush(log_file);
+          if (log_file)
           {
-            //do the effective write
-            struct splt_ssplit *temp = state->silence_list;
-            fprintf(log_file, "%s\n", splt_t_get_filename_to_split(state));
-            fprintf(log_file, "%.2f\t%d\t%.2f\t%d\n",
-              splt_o_get_float_option(state, SPLT_OPT_PARAM_THRESHOLD),
-              splt_o_get_int_option(state, SPLT_OPT_PARAM_MIN_ENTROPY),
-              splt_o_get_float_option(state, SPLT_OPT_PARAM_MIN_LENGTH),
-              splt_o_get_int_option(state, SPLT_OPT_PARAM_SHOTS));
-            while (temp != NULL)
-            {
-              fprintf(
-                log_file, "%f\t%f\t%ld\n", temp->begin_position, temp->end_position, temp->len);
-              temp = temp->next;
-            }
-            fflush(log_file);
-            if (log_file)
-            {
-              fclose(log_file);
-              log_file = NULL;
-            }
-            temp = NULL;
+            fclose(log_file);
+            log_file = NULL;
           }
+          temp = NULL;
         }
       }
     }
