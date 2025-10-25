@@ -273,9 +273,9 @@ AC_ARG_ENABLE(pcre, AS_HELP_STRING([--disable-pcre],[Disable pcre support to set
 
 if test "x$enable_pcre" = xyes;then
   PKG_PROG_PKG_CONFIG
-  PKG_CHECK_MODULES([PCRE], [libpcre >= 1.0],
+  PKG_CHECK_MODULES([PCRE], [libpcre2-16 >= 1.0],
       [AM_CONDITIONAL(PCRE, true) pcre="yes" ],
-      [AC_MSG_ERROR([libpcre is not installed. It is used for setting tags from input filename.
+      [AC_MSG_ERROR([libpcre2 is not installed. It is used for setting tags from input filename.
 
     Install it or configure with "--disable-pcre".])])
 fi

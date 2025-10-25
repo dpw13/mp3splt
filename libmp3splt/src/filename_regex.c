@@ -32,14 +32,15 @@
 #ifndef NO_PCRE
 
 #include <string.h>
-#include <pcre.h>
+#define PCRE2_CODE_UNIT_WIDTH 8
+#include <pcre2.h>
 
 #include "splt.h"
 
-static char *splt_fr_get_pattern(pcre *re, const char *filename, int *ovector, int rc, char *key);
-static void splt_fr_copy_pattern_to_tags(pcre *re, const char *filename, int *ovector, int rc,
+static char *splt_fr_get_pattern(pcre2_match_data *match, char *key);
+static void splt_fr_copy_pattern_to_tags(pcre2_match_data *match,
   char *key, int tags_field, splt_tags *tags, int format, int replace_underscores, int *error);
-static int splt_fr_get_int_pattern(pcre *re, const char *filename, int *ovector, int rc, char *key);
+static int splt_fr_get_int_pattern(pcre2_match_data *match, char *key);
 static void splt_fr_set_char_field_on_tags_and_convert(
   splt_tags *tags, int tags_field, char *pattern, int format, int replace_underscores, int *error);
 
@@ -72,8 +73,8 @@ splt_tags *splt_fr_parse_from_state(splt_state *state, int *error)
 splt_tags *splt_fr_parse(splt_state *state, const char *filename, const char *regex,
   const char *default_comment, const char *default_genre, int *error)
 {
-  const char *errorbits;
-  int erroroffset;
+  int errorcode;
+  size_t erroroffset;
 
   splt_d_print_debug(state, "filename for regex = _%s_\n", filename);
   splt_d_print_debug(state, "regex = _%s_\n", regex);
@@ -85,32 +86,31 @@ splt_tags *splt_fr_parse(splt_state *state, const char *filename, const char *re
     return NULL;
   }
 
-  pcre *re = pcre_compile(regex, PCRE_CASELESS | PCRE_UTF8, &errorbits, &erroroffset, NULL);
+  pcre2_code *re = pcre2_compile((PCRE2_SPTR)regex, 0, PCRE2_CASELESS | PCRE2_UTF, &errorcode, &erroroffset, NULL);
   if (!re)
   {
     *error = SPLT_INVALID_REGEX;
-    char *message = splt_su_get_formatted_message(state, "@%u: %s", erroroffset, errorbits);
+    char *message = splt_su_get_formatted_message(state, "@%u: %d", erroroffset, errorcode);
     splt_e_set_error_data(state, message);
     return NULL;
   }
 
-  int ovector[90] = {
-    0,
-  };
-  const size_t ovsize = sizeof(ovector) / sizeof(*ovector);
+  pcre2_match_data *match = pcre2_match_data_create_from_pattern(re, NULL);
 
-  int rc = pcre_exec(re, NULL, filename, strlen(filename), 0, 0, ovector, ovsize);
-  if (rc == PCRE_ERROR_NOMATCH)
+  int rc = pcre2_match(re, (PCRE2_UCHAR *)filename, strlen(filename), 0, 0, match, NULL);
+  if (rc == PCRE2_ERROR_NOMATCH)
   {
     *error = SPLT_REGEX_NO_MATCH;
-    pcre_free(re);
+    pcre2_match_data_free(match);
+    pcre2_code_free(re);
     return NULL;
   }
 
   splt_tags *tags = splt_tu_new_tags(error);
   if (*error < 0)
   {
-    pcre_free(re);
+    pcre2_match_data_free(match);
+    pcre2_code_free(re);
     return NULL;
   }
   splt_tu_reset_tags(tags);
@@ -118,43 +118,43 @@ splt_tags *splt_fr_parse(splt_state *state, const char *filename, const char *re
   int replace_underscores = splt_o_get_int_option(state, SPLT_OPT_REPLACE_UNDERSCORES_TAG_FORMAT);
 
   int format = splt_o_get_int_option(state, SPLT_OPT_ARTIST_TAG_FORMAT);
-  splt_fr_copy_pattern_to_tags(re, filename, ovector, rc, "artist", SPLT_TAGS_ARTIST, tags, format,
+  splt_fr_copy_pattern_to_tags(match, "artist", SPLT_TAGS_ARTIST, tags, format,
     replace_underscores, error);
   if (*error < 0) { goto error; }
 
   format = splt_o_get_int_option(state, SPLT_OPT_ALBUM_TAG_FORMAT);
   splt_fr_copy_pattern_to_tags(
-    re, filename, ovector, rc, "album", SPLT_TAGS_ALBUM, tags, format, replace_underscores, error);
+    match, "album", SPLT_TAGS_ALBUM, tags, format, replace_underscores, error);
   if (*error < 0) { goto error; }
 
   splt_fr_copy_pattern_to_tags(
-    re, filename, ovector, rc, "year", SPLT_TAGS_YEAR, tags, SPLT_NO_CONVERSION, SPLT_FALSE, error);
+    match, "year", SPLT_TAGS_YEAR, tags, SPLT_NO_CONVERSION, SPLT_FALSE, error);
   if (*error < 0) { goto error; }
 
   format = splt_o_get_int_option(state, SPLT_OPT_COMMENT_TAG_FORMAT);
-  char *pattern = splt_fr_get_pattern(re, filename, ovector, rc, "comment");
+  char *pattern = splt_fr_get_pattern(match, "comment");
   if (pattern)
   {
     splt_fr_set_char_field_on_tags_and_convert(
-      tags, SPLT_TAGS_COMMENT, pattern, format, replace_underscores, error);
-    pcre_free_substring(pattern);
+      tags, SPLT_TAGS_COMMENT, (char *)pattern, format, replace_underscores, error);
+    pcre2_substring_free((PCRE2_UCHAR *)pattern);
     if (*error < 0) { goto error; }
   }
   else { splt_tu_set_field_on_tags(tags, SPLT_TAGS_COMMENT, default_comment); }
 
-  int track = splt_fr_get_int_pattern(re, filename, ovector, rc, "tracknum");
+  int track = splt_fr_get_int_pattern(match, "tracknum");
   if (track != -1) { splt_tu_set_field_on_tags(tags, SPLT_TAGS_TRACK, &track); }
 
   //TODO: total tracks support
-  int total_tracks = splt_fr_get_int_pattern(re, filename, ovector, rc, "tracks");
+  int total_tracks = splt_fr_get_int_pattern(match, "tracks");
 
   format = splt_o_get_int_option(state, SPLT_OPT_TITLE_TAG_FORMAT);
-  char *title = splt_fr_get_pattern(re, filename, ovector, rc, "title");
+  char *title = splt_fr_get_pattern(match, "title");
   if (title)
   {
     splt_fr_set_char_field_on_tags_and_convert(
       tags, SPLT_TAGS_TITLE, title, format, replace_underscores, error);
-    pcre_free_substring(title);
+    pcre2_substring_free((PCRE2_UCHAR *)title);
     if (*error < 0) { goto error; }
   }
   else
@@ -180,64 +180,65 @@ splt_tags *splt_fr_parse(splt_state *state, const char *filename, const char *re
     }
   }
 
-  char *genre = splt_fr_get_pattern(re, filename, ovector, rc, "genre");
+  char *genre = splt_fr_get_pattern(match, "genre");
   if (genre)
   {
     splt_tu_set_field_on_tags(tags, SPLT_TAGS_GENRE, genre);
-    pcre_free_substring(genre);
+    pcre2_substring_free((PCRE2_UCHAR *)genre);
     if (*error < 0) { goto error; }
   }
   else { splt_tu_set_field_on_tags(tags, SPLT_TAGS_GENRE, default_genre); }
 
-  pcre_free(re);
+  pcre2_match_data_free(match);
+  pcre2_code_free(re);
 
   *error = SPLT_REGEX_OK;
 
   return tags;
 
 error:
-  pcre_free(re);
+  pcre2_code_free(re);
   splt_tu_free_one_tags(&tags);
   return NULL;
 }
 
-static void splt_fr_copy_pattern_to_tags(pcre *re, const char *filename, int *ovector, int rc,
+static void splt_fr_copy_pattern_to_tags(pcre2_match_data *match,
   char *key, int tags_field, splt_tags *tags, int format, int replace_underscores, int *error)
 {
   char *pattern = NULL;
-  pattern = splt_fr_get_pattern(re, filename, ovector, rc, key);
+  pattern = splt_fr_get_pattern(match, key);
 
   splt_fr_set_char_field_on_tags_and_convert(
     tags, tags_field, pattern, format, replace_underscores, error);
 
-  if (pattern) { pcre_free_substring(pattern); }
+  if (pattern) { pcre2_substring_free((PCRE2_UCHAR *)pattern); }
 }
 
-static int splt_fr_get_int_pattern(pcre *re, const char *filename, int *ovector, int rc, char *key)
+static int splt_fr_get_int_pattern(pcre2_match_data *match, char *key)
 {
   int value = -1;
 
   char *pattern = NULL;
-  pattern = splt_fr_get_pattern(re, filename, ovector, rc, key);
+  pattern = splt_fr_get_pattern(match, key);
   if (pattern)
   {
     value = atoi(pattern);
-    pcre_free_substring(pattern);
+    pcre2_substring_free((PCRE2_UCHAR *)pattern);
   }
 
   return value;
 }
 
-static char *splt_fr_get_pattern(pcre *re, const char *filename, int *ovector, int rc, char *key)
+static char *splt_fr_get_pattern(pcre2_match_data *match, char *key)
 {
-  char *pattern = NULL;
+  PCRE2_UCHAR *pattern = NULL;
 
-  if (pcre_get_named_substring(re, filename, ovector, rc, key, (const char **)&pattern) ==
-      PCRE_ERROR_NOSUBSTRING)
+  if (pcre2_substring_get_byname_8(match, (PCRE2_UCHAR *)key, (PCRE2_UCHAR **)&pattern, NULL) ==
+      PCRE2_ERROR_NOSUBSTRING)
   {
     return NULL;
   }
-  else { return pattern; }
+  else { return (char *)pattern; }
 }
 
 static void splt_fr_set_char_field_on_tags_and_convert(
