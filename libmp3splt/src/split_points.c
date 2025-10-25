@@ -348,7 +348,6 @@ void splt_sp_skip_minimum_track_length_splitpoints(splt_state *state, int *error
     if (track_length >= min_track_length) { continue; }
 
     hms_t hms1, hms2;
-    long mins1, secs1, hundr1;
     splt_co_get_hms(track_length, &hms1);
     splt_co_get_hms(min_track_length, &hms2);
 

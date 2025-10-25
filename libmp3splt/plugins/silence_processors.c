@@ -157,7 +157,7 @@ short splt_scan_silence_processor(double time, float level, int min_bits, int si
 
       if ((end_position - begin_position - ssd->min) >= 0.f)
       {
-        printf("%f: new split %f:%f min %f\n", time, begin_position, end_position, ssd->min);
+        //printf("%f: new split %f:%f min %f\n", time, begin_position, end_position, ssd->min);
         if (splt_siu_ssplit_new(
               &ssd->state->silence_list, begin_position, end_position, ssd->len, error) == -1)
         {

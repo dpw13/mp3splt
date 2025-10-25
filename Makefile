@@ -3,7 +3,7 @@ LIBMP3SPLT_DIR:=$(MP3SPLIT_TOP)/libmp3splt
 MP3SPLT_DIR:=$(MP3SPLIT_TOP)/newmp3splt
 MP3SPLT_GTK_DIR:=$(MP3SPLIT_TOP)/mp3splt-gtk
 
-COMMON_CONFIG_FLAGS:=--enable-c-debug --prefix=$(MP3SPLIT_TOP)/dist
+COMMON_CONFIG_FLAGS:=--enable-c-debug --prefix=/opt/mp3splt
 
 usage: help
 
@@ -52,20 +52,21 @@ windows_cross_installers:
 	rm -rf translations
 
 #installs libmp3splt, mp3splt and mp3splt-gtk (must be run as root)
-root_install: root_libmp3splt root_newmp3splt root_mp3splt-gtk
-root_libmp3splt:
+
+configure_libmp3splt:
 	cd ${LIBMP3SPLT_DIR} && ./autogen.sh && \
-	./configure --with-mad=/home/dwagner/git/libmad/dist ${COMMON_CONFIG_FLAGS} \
-	&& make clean && make -j8 && make install
-#
-#	&& if [ -z `grep '/usr/local/lib' /etc/ld.so.conf` ];\
-#	then `echo '/usr/local/lib' >> /etc/ld.so.conf` && ldconfig;fi
-root_newmp3splt:
-	cd ${MP3SPLT_DIR} && ./autogen.sh && PKG_CONFIG_PATH=$(MP3SPLIT_TOP)/dist/lib/pkgconfig ./configure ${COMMON_CONFIG_FLAGS} \
-	&& make clean && make -j8 && make install
-root_mp3splt-gtk:
-	cd ${MP3SPLT_GTK_DIR} && ./autogen.sh && PKG_CONFIG_PATH=$(MP3SPLIT_TOP)/dist/lib/pkgconfig ./configure ${COMMON_CONFIG_FLAGS} --enable-audacious --disable-gstreamer \
-	&& make clean && make -j8 && make install
+	./configure --with-mad=/home/dwagner/git/libmad/dist ${COMMON_CONFIG_FLAGS}
+configure_newmp3splt:
+	cd ${MP3SPLT_DIR} && ./autogen.sh && PKG_CONFIG_PATH=$(MP3SPLIT_TOP)/dist/lib/pkgconfig ./configure ${COMMON_CONFIG_FLAGS}
+configure_mp3splt-gtk:
+	cd ${MP3SPLT_GTK_DIR} && ./autogen.sh && PKG_CONFIG_PATH=$(MP3SPLIT_TOP)/dist/lib/pkgconfig ./configure ${COMMON_CONFIG_FLAGS} --enable-audacious --disable-gstreamer
+configure_all: configure_libmp3splt configure_newmp3splt configure_mp3splt-gtk
+
+install_all:
+	cd ${LIBMP3SPLT_DIR} && make install
+	cd ${MP3SPLT_DIR} && make install
+	cd ${MP3SPLT_GTK_DIR} && make install
+
 #uninstalls libmp3splt, mp3splt and mp3splt-gtk as root
 root_uninstall:
 	cd ${LIBMP3SPLT_DIR} && make uninstall
@@ -93,12 +94,7 @@ vim:
 	screen vim libmp3splt/src/*.{c,h} libmp3splt/plugins/*.{c,h} libmp3splt/include/libmp3splt/*.h newmp3splt/src/*.c mp3splt-gtk/src/*.{c,h}
 
 compile_all:
-	cd ${LIBMP3SPLT_DIR} && ./autogen.sh && ./configure && make clean && make
-	cd ${MP3SPLT_DIR} && ./autogen.sh && ./configure && make clean && make
-	cd ${MP3SPLT_GTK_DIR} && ./autogen.sh && ./configure && make clean && make
-
-compile:
-	cd ${LIBMP3SPLT_DIR} && make
-	cd ${MP3SPLT_DIR} && make
-	cd ${MP3SPLT_GTK_DIR} && make
+	cd ${LIBMP3SPLT_DIR} && make -j8
+	cd ${MP3SPLT_DIR} && make -j8
+	cd ${MP3SPLT_GTK_DIR} && make -j8
 

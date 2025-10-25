@@ -42,7 +42,10 @@ int splt_c_put_split_file(splt_state *state, const char *filename)
 
   if (state->split.file_split != NULL)
   {
-    state->split.file_split(filename, state->split.file_split_cb_data);
+    if (!splt_o_get_int_option(state, SPLT_OPT_QUIET_MODE))
+    {
+      state->split.file_split(filename, state->split.file_split_cb_data);
+    }
     error = splt_c_append_to_m3u_file(state, filename);
   }
   else

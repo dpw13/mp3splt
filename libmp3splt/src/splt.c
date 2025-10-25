@@ -95,7 +95,7 @@ static long splt_s_split(splt_state *state, int first_splitpoint, int second_spl
     save_end_point = SPLT_FALSE;
   }
 
-  printf("Split %d:%d (%ld:%ld)\n", first_splitpoint, second_splitpoint, split_begin, split_end);
+  splt_d_print_debug(state, "Split %d:%d (%ld:%ld)\n", first_splitpoint, second_splitpoint, split_begin, split_end);
 
   if (get_error == SPLT_OK)
   {

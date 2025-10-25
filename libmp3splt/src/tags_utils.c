@@ -476,9 +476,6 @@ static char *splt_tu_get_replaced_with_tags(const char *word, const splt_tags *t
   hms_t cur_hms, next_hms;
   long point_value = splt_sp_get_splitpoint_value(state, current_split, &err);
   splt_co_get_hms(point_value, &cur_hms);
-  long next_mins = -1;
-  long next_secs = -1;
-  long next_hundr = -1;
   long next_point_value = -1;
   if (splt_sp_splitpoint_exists(state, current_split + 1))
   {
