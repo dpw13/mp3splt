@@ -1156,8 +1156,10 @@ splt_code mp3splt_split(splt_state *state)
       const char *plugin_name = splt_p_get_name(state, &error);
       if (error < 0) { goto function_end; }
 
-      splt_c_put_info_message_to_client(
-        state, _(" info: file matches the plugin '%s'\n"), plugin_name);
+      if (!splt_o_get_int_option(state, SPLT_OPT_QUIET_MODE)) {
+        splt_c_put_info_message_to_client(
+          state, _(" info: file matches the plugin '%s'\n"), plugin_name);
+      }
 
       //print the new m3u fname
       char *m3u_fname_with_path = splt_t_get_m3u_file_with_path(state, &error);

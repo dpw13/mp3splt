@@ -1,6 +1,6 @@
 ACLOCAL_AMFLAGS = -I m4
 
-SUBDIRS = src plugins test m4 po doc
+SUBDIRS = src plugins test m4 po
 
 pkgconfigdir = $(libdir)/pkgconfig
 pkgconfig_DATA = libmp3splt.pc

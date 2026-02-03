@@ -34,8 +34,9 @@
 static void splt_mp3_scan_silence_and_process(splt_state *state, off_t begin_offset,
   float max_threshold, int min_bits, unsigned long length,
   splt_scan_silence_processor_t process_silence, splt_scan_silence_data *ssd, int *error);
-static int splt_mp3_pcm_silence(splt_mp3_state *mp3state, int channels, mad_fixed_t threshold);
-static int splt_mp3_gran_silence(splt_mp3_state *mp3state, int channels, int min_bits);
+static mad_fixed_t splt_mp3_pcm_silence(const mad_fixed_t *samples, int length, mad_fixed_t *lpf_level);
+static int splt_mp3_entropy_silence(splt_mp3_state *mp3state, int channel);
+static int splt_mp3_gain_silence(splt_mp3_state *mp3state, int channel);
 
 /*! scan for silence
 
@@ -71,12 +72,26 @@ int splt_mp3_scan_silence(splt_state *state, off_t begin, unsigned long length, 
   return found;
 }
 
+static void log_silence(splt_state *state, unsigned long time_cs, int channel, mad_fixed_t max_sample, mad_fixed_t avg_sample, int ent_bits, int gain) {
+  FILE *full_log_file_descriptor = splt_t_get_silence_full_log_file_descriptor(state);
+  if (!full_log_file_descriptor) { return; }
+
+  float time = time_cs / 100.f;
+
+  float max_db = splt_co_convert_to_db(mad_f_todouble(max_sample));
+  float avg_db = splt_co_convert_to_db(mad_f_todouble(avg_sample));
+
+  fprintf(full_log_file_descriptor, "%f,%d,%f,%d,%f,%d,%d,%d\n", time,
+    channel, max_db, max_sample, avg_db, avg_sample, ent_bits, gain);
+}
+
 static void splt_mp3_scan_silence_and_process(splt_state *state, off_t begin_offset,
   float max_threshold, int min_bits, unsigned long length,
   splt_scan_silence_processor_t process_silence, splt_scan_silence_data *ssd, int *error)
 {
   int found = 0;
   short stop = SPLT_FALSE;
+  int do_synth = 1;
 
   mad_fixed_t threshold = mad_f_tofixed(splt_co_convert_from_db(max_threshold));
 
@@ -98,9 +113,6 @@ static void splt_mp3_scan_silence_and_process(splt_state *state, off_t begin_off
 
   mad_timer_reset(&mp3state->timer);
 
-  mp3state->temp_level = 0.0;
-  mp3state->temp_ent = 0;
-
   do {
     int mad_err = SPLT_OK;
 
@@ -112,34 +124,43 @@ static void splt_mp3_scan_silence_and_process(splt_state *state, off_t begin_off
       case 1:
         //1 we have a valid frame
         mad_timer_add(&mp3state->timer, mp3state->frame.header.duration);
-        if (min_bits < 0) mad_synth_frame(&mp3state->synth, &mp3state->frame);
+        if (do_synth) mad_synth_frame(&mp3state->synth, &mp3state->frame);
         unsigned long time =
           (unsigned long)mad_timer_count(mp3state->timer, MAD_UNITS_CENTISECONDS);
 
         int silence_was_found;
         float level = 0.0;
+        int ent_bits = 0;
+        int channels = MAD_NCHANNELS(&mp3state->frame.header);
 
-        if (min_bits < 0)
-        {
-          /* If frame entropy threshold isn't used, check waveform for silence. */
-          silence_was_found =
-            splt_mp3_pcm_silence(mp3state, MAD_NCHANNELS(&mp3state->frame.header), threshold);
-          level = splt_co_convert_to_db(mad_f_todouble(mp3state->temp_level));
-          if (level < -96.0) { level = -96.0; }
-          if (level > 0.0) { level = 0.0; }
-        }
-        else
-        {
-          silence_was_found =
-            splt_mp3_gran_silence(mp3state, MAD_NCHANNELS(&mp3state->frame.header), min_bits);
+        /* Check statistics on each channel for this frame */
+        int channel;
+        for (channel = 0; channel < channels; channel++) {
+          mad_fixed_t avg_sample;
+          mad_fixed_t max_sample =
+            splt_mp3_pcm_silence(mp3state->synth.pcm.samples[channel], mp3state->synth.pcm.length, &avg_sample);
+          silence_was_found = max_sample < threshold;
+
+          level = splt_co_convert_to_db(mad_f_todouble(avg_sample));
+
+          ent_bits = splt_mp3_entropy_silence(mp3state, channel);
+          silence_was_found |= ent_bits < min_bits;
+
+          int max_gain = splt_mp3_gain_silence(mp3state, channel);
+          silence_was_found |= max_gain < 75;
+
+          if (silence_was_found) {
+            log_silence(state, time, channel, max_sample, avg_sample, ent_bits, max_gain);
+          }
         }
 
         int err = SPLT_OK;
-        int ent_bits = mp3state->temp_ent;
         short must_flush = (length > 0 && time >= length);
-        double time_in_double = (double)time / 100.f;
-        stop = process_silence(
-          time_in_double, level, ent_bits, silence_was_found, must_flush, ssd, &found, &err);
+        if (must_flush || time < 0) {
+          ssd->flush = SPLT_TRUE;
+          stop = SPLT_TRUE;
+        }
+
         if (stop || stop == -1)
         {
           stop = SPLT_TRUE;
@@ -199,9 +220,8 @@ static void splt_mp3_scan_silence_and_process(splt_state *state, off_t begin_off
 
   } while (!stop);
 
-  int junk;
   int err = SPLT_OK;
-  process_silence(-1, -96, -1, SPLT_FALSE, SPLT_FALSE, ssd, &junk, &err);
+  //process_silence(-1, -96, -1, SPLT_FALSE, SPLT_FALSE, ssd, &junk, &err);
   if (err < 0) { *error = err; }
 
   //only if we have silence mode, we set progress to 100%
@@ -217,49 +237,48 @@ end:
   mad_synth_finish(&mp3state->synth);
 }
 
-/*!  Compare the noise level with threshold
+/*!  Get the loudest sample in the granule
 
 Used by mp3_scan_silence
 
 \return
- - 0 if silence spot > threshold,
- - 1 otherwise
+ - max(abs(samples))
 
 Always computes only one frame
 */
-static int splt_mp3_pcm_silence(splt_mp3_state *mp3state, int channels, mad_fixed_t threshold)
+static mad_fixed_t splt_mp3_pcm_silence(const mad_fixed_t *samples, int length, mad_fixed_t *lpf_level)
 {
-  int i, j;
+  int i;
   mad_fixed_t sample;
+  mad_fixed_t max_sample = 0;
+  unsigned long long sample_sum = 0;
 
-  for (j = 0; j < channels; j++)
+  for (i = 0; i < length; i++)
   {
-    for (i = 0; i < mp3state->synth.pcm.length; i++)
-    {
-      sample = mad_f_abs(mp3state->synth.pcm.samples[j][i]);
-      mp3state->temp_level = mp3state->temp_level * 0.999 + sample * 0.001;
+    sample = mad_f_abs(samples[i]);
+    sample_sum += sample;
 
-      if (sample > threshold) return 0;
-    }
+    if (sample > max_sample) max_sample = sample;
   }
 
-  return 1;
+  *lpf_level = (mad_fixed_t)(sample_sum / length);
+
+  return max_sample;
 }
 
-/*!  Compare the granule bit lengths to the specified threshold.
+/*!  Find the lowest granule entropy count on the given channel.
 
 Used by mp3_scan_silence
 
 \return
- - 0 if silence spot > threshold,
- - 1 otherwise
+ - Number of bits used to encode DCT coefficients
 
 Always computes only one frame
 */
 
-static int splt_mp3_gran_silence(splt_mp3_state *mp3state, int channels, int threshold)
+static int splt_mp3_entropy_silence(splt_mp3_state *mp3state, int channel)
 {
-  int gr, ch;
+  int gr;
   struct sideinfo *si = mp3state->frame.header.extra;
   int ngr = mp3state->frame.header.flags & MAD_FLAG_LSF_EXT ? 2 : 1;
   int min_ent = INT_MAX;
@@ -270,24 +289,42 @@ static int splt_mp3_gran_silence(splt_mp3_state *mp3state, int channels, int thr
   for (gr = 0; gr < ngr; gr++)
   {
     struct granule *granule = &si->gr[gr];
-    int gran_ent = INT_MAX;
 
-    for (ch = 0; ch < channels; ch++)
-    {
-      int cnt = granule->ch[ch].part2_3_length;
-      /* Compute the minimum entropy bit count across all channels */
-      gran_ent = cnt < gran_ent ? cnt : gran_ent;
-    }
-
-    min_ent = gran_ent < min_ent ? gran_ent : min_ent;
-    mp3state->temp_ent = min_ent;
-    if (gran_ent < threshold)
-    {
-      /* Found a set of DCT coefficients meeting our requirement. */
-      return 1;
-    }
+    int cnt = granule->ch[channel].part2_3_length;
+    /* Compute the minimum entropy bit count across all granules */
+    min_ent = cnt < min_ent ? cnt : min_ent;
   }
 
-  /* If none of the tests for sound fire and we get here, we know had no silence. */
-  return 0;
+  return min_ent;
+}
+
+/*!  Find the maximum global gain of all granules in a frame.
+
+Used by mp3_scan_silence
+
+\return
+ - Max global gain for this channel
+
+Always computes only one frame
+*/
+static int splt_mp3_gain_silence(splt_mp3_state *mp3state, int channel)
+{
+  int gr;
+  struct sideinfo *si = mp3state->frame.header.extra;
+  int ngr = mp3state->frame.header.flags & MAD_FLAG_LSF_EXT ? 2 : 1;
+  int max_gain = 0;
+
+  if (si == NULL) return 0;
+
+
+  for (gr = 0; gr < ngr; gr++)
+  {
+    struct granule *granule = &si->gr[gr];
+
+    int gain = granule->ch[channel].global_gain;
+    /* Compute the minimum entropy bit count across all granules */
+    max_gain = gain > max_gain ? gain : max_gain;
+  }
+
+  return max_gain;
 }

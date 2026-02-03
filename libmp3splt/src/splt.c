@@ -1019,7 +1019,8 @@ int splt_s_set_silence_splitpoints(splt_state *state, int *error)
         {
           //do the effective write
           struct splt_ssplit *temp = state->silence_list;
-          fprintf(log_file, "%s\n", splt_t_get_filename_to_split(state));
+          double total_time = splt_t_get_total_time_as_double_secs(state);
+          fprintf(log_file, "%s\t%f\n", splt_t_get_filename_to_split(state), total_time);
           fprintf(log_file, "%.2f\t%d\t%.2f\t%d\n",
             splt_o_get_float_option(state, SPLT_OPT_PARAM_THRESHOLD),
             splt_o_get_int_option(state, SPLT_OPT_PARAM_MIN_ENTROPY),
