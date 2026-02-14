@@ -18,21 +18,7 @@ else
 AM_CFLAGS += -DNO_PCRE
 endif
 
-if WIN32
-
-libmp3splt_la_LIBADD += -lltdl 
-
-if IS_ON_WINDOWS
-libmp3splt_la_LIBADD += /lib/libz.a
-else
-libmp3splt_la_LIBADD += -lz
-endif
-
-libmp3splt_la_LIBADD += -lws2_32 -lintl -lshlwapi
-
-else
 libmp3splt_la_LIBADD += @LIBLTDL@ 
-endif
 
 libmp3splt_la_SOURCES = \
   types_func.c types_func.h \

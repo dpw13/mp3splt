@@ -78,14 +78,12 @@ SONAME=0
 AC_SUBST(SONAME)
 AC_DEFINE_UNQUOTED([SPLT_SONAME], "$SONAME", [library SONAME])
 
-AC_CONFIG_MACRO_DIRS([m4])
-
 #################################################################
 # Enable libtool, check for libltdl and define @LIBLTDL@ and @INCLTDL@
 #################################################################
 
-LT_INIT
 LT_CONFIG_LTDL_DIR([libltdl])
+LT_INIT
 LTDL_INIT([])
 
 #################################################################
@@ -115,8 +113,7 @@ fi
 #################################################################
 
 AC_FUNC_FSEEKO
-AC_CHECK_FUNCS(fseeko, [ CFLAGS="$CFLAGS -D_LARGEFILE_SOURCE -D_FILE_OFFSET_BITS=64" ],
-               [ AC_MSG_WARN([fseeko() function is missing: FILE > 2 GB SUPPORT DISABLED!]) ])
+AC_CHECK_FUNCS(fseeko, [ CFLAGS="$CFLAGS -D_LARGEFILE_SOURCE -D_FILE_OFFSET_BITS=64" ])
 
 #################################################
 # Check for libraries
@@ -133,27 +130,24 @@ AC_CHECK_LIB(ltdl, lt_dlopen, [ hasltdl="yes" ], [ AC_MSG_ERROR([libltdl not fou
 #################################################################
 
 #check for --disable-mp3 & mad library
-AM_CONDITIONAL(MP3_PLUGIN,false)
 mp3="no"
 AC_ARG_ENABLE(mp3, [AS_HELP_STRING([--disable-mp3],[ Disable mp3 plugin. ]) ],
     [enable_mp3_plugin=$enableval],[enable_mp3_plugin="yes"])
 
 if test "x$enable_mp3_plugin" = xyes;then
-  MAD_CHECK([ AM_CONDITIONAL(MP3_PLUGIN,true) mp3="yes" ],
-      [ AC_MSG_WARN([libmad not found ! Will build without mp3 support.]) ])
+  MAD_CHECK([ mp3="yes" ])
 fi
+AM_CONDITIONAL(MP3_PLUGIN,[ test "x$mp3" = xyes ])
 
 #check for --disable-id3tag & id3tag library
-AM_CONDITIONAL(ID3TAG,false)
 id3="no";
 AC_ARG_ENABLE(id3tag, [AS_HELP_STRING([--disable-id3tag],[ Disable id3tag support for the mp3 plugin. ]) ],
     [enable_id3tag=$enableval],[enable_id3tag="yes"])
 
 if test "x$enable_id3tag" = xyes;then
-  ID3_CHECK([ AM_CONDITIONAL(ID3TAG,true) id3="yes"; ],
-      [ AC_MSG_WARN([libid3tag not found ! Will build without id3 support.]) ])
+  ID3_CHECK([ id3="yes" ])
 fi
-
+AM_CONDITIONAL(ID3TAG,[ test "x$id3" = xyes ])
 
 #################################################################
 # Check ogg plugin libraries
@@ -285,8 +279,6 @@ libmp3splt.pc
 src/Makefile
 po/Makefile.in
 plugins/Makefile
-test/Makefile
-m4/Makefile
 doc/Makefile
 doc/Doxyfile_all
 doc/Doxyfile_api
