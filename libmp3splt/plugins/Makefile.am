@@ -7,10 +7,6 @@ common_CPPFLAGS = -I$(top_srcdir)/include/libmp3splt -I$(top_srcdir)/src
 common_LDFLAGS = -L$(top_builddir)/src -L$(top_builddir)/src/.libs \
    -no-undefined -lm -lmp3splt @LIBINTL@
 
-if WIN32
-common_LDFLAGS += -lz -lws2_32 -lintl
-endif
-
 #mp3 plugin
 if MP3_PLUGIN
 

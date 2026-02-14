@@ -43,6 +43,7 @@ m4_define([libmp3splt_version],
 AC_PREREQ([2.71])
 AC_INIT([libmp3splt],[libmp3splt_version],[m@ioalex.net])
 AC_CONFIG_AUX_DIR([libltdl/config])
+AC_CONFIG_SRCDIR([src])
 AM_INIT_AUTOMAKE
 AC_CONFIG_HEADERS([config.h])
 AM_MAINTAINER_MODE([enable])
@@ -77,52 +78,15 @@ SONAME=0
 AC_SUBST(SONAME)
 AC_DEFINE_UNQUOTED([SPLT_SONAME], "$SONAME", [library SONAME])
 
+AC_CONFIG_MACRO_DIRS([m4])
+
 #################################################################
 # Enable libtool, check for libltdl and define @LIBLTDL@ and @INCLTDL@
 #################################################################
 
-ifdef([LT_CONFIG_LTDL_DIR],
-      [ LT_CONFIG_LTDL_DIR([libltdl]) ],
-      [])
-
-ifdef([LT_INIT],
-      [ LT_INIT([win32-dll]) ],
-      [ LT_INIT ])
-
+LT_INIT
+LT_CONFIG_LTDL_DIR([libltdl])
 LTDL_INIT([])
-
-#################################################################
-# Check for the type of the host
-#################################################################
-
-AM_CONDITIONAL(WIN32,false)
-AC_MSG_CHECKING(the host)
-case $host in
-  *linux*)
-    HOST="Linux-based system"
-		;;
-	*openbsd*)
-		HOST="OpenBSD"
-		LIBS="$LIBS -lm"
-		;;
-	*netbsd*)
-		HOST="NetBSD"
-		;;
-	*freebsd*)
-		HOST="FreeBSD"
-		;;
-	*mingw*)
-		HOST="Mingw"
-    AM_CONDITIONAL(WIN32, true)
-		;;
-	*solaris*)
-		HOST="Solaris"
-		;;
-	*)
-		HOST="Other"
-		;;
-esac
-AC_MSG_RESULT($HOST)
 
 #################################################################
 # Check for some debugging, warnings and optimise options
@@ -163,19 +127,6 @@ AC_CHECK_LIB(m, pow, [ haslm="yes" ] , [ AC_MSG_ERROR([libm not found !]) ] )
 
 #check for -ltld
 AC_CHECK_LIB(ltdl, lt_dlopen, [ hasltdl="yes" ], [ AC_MSG_ERROR([libltdl not found - check libtool installation !]) ] )
-
-#################################################################
-# helper for windows compilation
-#################################################################
-
-AM_CONDITIONAL(IS_ON_WINDOWS, false)
-
-AC_ARG_ENABLE(win, [AS_HELP_STRING([--enable-win],[ Enable if compiling on windows with mingw. ]) ],
-    [enable_win=$enableval],[enable_win="no"])
-
-if test "x$enable_win" = xyes;then
-  AM_CONDITIONAL(IS_ON_WINDOWS, true)
-fi
 
 #################################################################
 # Check mp3 plugin libraries
@@ -236,30 +187,6 @@ if test "x$enable_flac_plugin" = xyes;then
   PKG_CHECK_MODULES([FLAC], [flac >= 1.2.1],
       [AM_CONDITIONAL(FLAC_PLUGIN, true) flac="yes" ],
       [AC_MSG_WARN([libFLAC is not found. Will build without flac support.])])
-fi
-
-#################################################################
-# Check for cutter
-#################################################################
-
-AM_CONDITIONAL(HAS_CUTTER, false)
-
-AC_ARG_ENABLE(cutter, [AS_HELP_STRING([--disable-cutter],[ Disable Cutter unit testing. ]) ],
-    [enable_cutter=$enableval],[enable_cutter="yes"])
-
-if test "x$enable_cutter" = xyes;then
-
-AC_CHECK_CUTTER
-
-cutter_command="no"
-AC_CHECK_FILE([$CUTTER], [cutter_command="yes"])
-
-if test "x$CUTTER" != x;then
-  if test "x$cutter_command" = xyes;then
-    AM_CONDITIONAL(HAS_CUTTER, true)
-  fi
-fi
-
 fi
 
 #################################################################

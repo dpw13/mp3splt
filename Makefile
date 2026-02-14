@@ -55,7 +55,7 @@ windows_cross_installers:
 
 configure_libmp3splt:
 	cd ${LIBMP3SPLT_DIR} && ./autogen.sh && \
-	./configure --with-mad=/home/dwagner/git/libmad/dist ${COMMON_CONFIG_FLAGS}
+	./configure --with-mad=${LIBMAD_DIR} ${COMMON_CONFIG_FLAGS}
 configure_newmp3splt:
 	cd ${MP3SPLT_DIR} && ./autogen.sh && PKG_CONFIG_PATH=$(MP3SPLIT_TOP)/dist/lib/pkgconfig ./configure ${COMMON_CONFIG_FLAGS}
 configure_mp3splt-gtk:
